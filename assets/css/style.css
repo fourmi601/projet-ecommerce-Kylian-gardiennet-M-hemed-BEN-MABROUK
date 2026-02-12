@@ -1,0 +1,192 @@
+:root {
+    --bg-dark: #0f1014;       /* Fond principal */
+    --bg-panel: #1a1c24;      /* Fond des cartes */
+    --primary-blue: #00439C;  /* Bleu PlayStation */
+    --primary-red: #E60012;   /* Rouge Nintendo */
+    --text-white: #ffffff;
+    --text-grey: #b3b3b3;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-white);
+    font-family: 'Rajdhani', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* --- HEADER / NAV --- */
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 40px;
+    background-color: rgba(15, 16, 20, 0.95);
+    border-bottom: 2px solid var(--primary-blue);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.site-logo {
+    height: 50px; /* Taille du logo ajustée */
+    object-fit: contain;
+}
+
+.search-box {
+    display: flex;
+    background: #252830;
+    border-radius: 5px;
+    padding: 5px;
+    width: 300px;
+}
+
+.search-box input {
+    background: transparent;
+    border: none;
+    color: white;
+    width: 100%;
+    outline: none;
+    padding-left: 10px;
+}
+
+.search-box button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.nav-links a {
+    color: var(--text-grey);
+    text-decoration: none;
+    margin: 0 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: 0.3s;
+}
+
+.nav-links a:hover, .nav-links a.active {
+    color: var(--text-white);
+    border-bottom: 2px solid var(--primary-red);
+}
+
+.user-actions a {
+    color: var(--text-white);
+    text-decoration: none;
+    margin-left: 15px;
+    font-size: 14px;
+}
+
+/* --- HERO --- */
+.hero {
+    height: 350px;
+    background: linear-gradient(to right, #0f1014 10%, rgba(0,0,0,0.4)), url('../img/banner.jpg');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    padding-left: 50px;
+    border-bottom: 1px solid #333;
+}
+
+.hero h1 {
+    font-size: 48px;
+    line-height: 1.1;
+    margin-bottom: 15px;
+}
+
+.highlight { color: var(--primary-blue); }
+
+.btn-hero {
+    background-color: var(--primary-red);
+    color: white;
+    padding: 12px 30px;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+    display: inline-block;
+    margin-top: 20px;
+}
+
+/* --- GRILLE JEUX --- */
+.container { padding: 40px; }
+.section-title { font-size: 24px; margin-bottom: 20px; border-left: 4px solid var(--primary-blue); padding-left: 10px; }
+
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 25px;
+}
+
+.game-card {
+    background-color: var(--bg-panel);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s;
+    border: 1px solid #2a2c35;
+}
+
+.game-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary-blue);
+}
+
+.card-image {
+    position: relative;
+    height: 300px; /* Hauteur fixe pour aligner les images */
+}
+
+.card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.platform-tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 2px 8px;
+    font-size: 12px;
+    border-radius: 3px;
+    border: 1px solid white;
+}
+
+.card-info { padding: 15px; }
+
+.card-info h3 {
+    margin: 0 0 5px 0;
+    font-size: 18px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.desc { font-size: 13px; color: var(--text-grey); margin-bottom: 15px; }
+
+.price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.price {
+    color: var(--primary-blue);
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.btn-add {
+    background-color: var(--primary-red);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.btn-add:hover { background-color: #ff1a1a; }
