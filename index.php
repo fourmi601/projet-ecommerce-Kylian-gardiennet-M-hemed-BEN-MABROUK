@@ -1,14 +1,14 @@
 <?php
-// On inclut la connexion à la base de données (Obligatoire pour le PDF)
+
 require_once 'db.php'; 
 
-// On récupère les jeux depuis la base de données
+/*jeu base données*/
 try {
     $sql = "SELECT * FROM jeu";
     $query = $pdo->query($sql);
     $jeux = $query->fetchAll();
 } catch (Exception $e) {
-    $jeux = []; // Si erreur, liste vide pour ne pas casser le site
+    $jeux = []; /* test jeu*/
 }
 ?>
 
@@ -41,7 +41,7 @@ try {
 
         <div class="user-actions">
             <a href="#">👤 Compte</a>
-            <a href="#" class="cart-btn">🛒 Panier (0)</a>
+            <a href="panier.php" class="cart-btn">🛒 Panier (0)</a>
         </div>
     </nav>
 
