@@ -13,6 +13,7 @@ session_start();
     <nav>
         <div class="logo-container"><a href="index.php"><img src="assets/img/logo.jpg" alt="Logo" class="site-logo"></a></div>
         <div class="nav-links"><a href="index.php">Accueil</a></div>
+        <button id="theme-toggle" class="nav-theme-btn">Mode Clair</button>
     </nav>
 
     <div class="container">
@@ -64,5 +65,6 @@ session_start();
             </div>
         </div>
     </div>
+    <script src="assets/js/main.js"></script>
 </body>
 </html>

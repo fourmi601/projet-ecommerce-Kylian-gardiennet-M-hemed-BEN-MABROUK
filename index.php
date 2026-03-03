@@ -36,6 +36,7 @@ try {
         <div class="nav-links">
             <a href="index.php" class="active">Accueil</a>
             <a href="#">Catalogue PC</a>
+            <button id="theme-toggle" class="nav-theme-btn">Mode Clair</button>
             <a href="#">Promos</a>
         </div>
 
@@ -81,6 +82,6 @@ try {
             <?php endif; ?>
         </div>
     </section>
-
+    <script src="assets/js/main.js"></script>
 </body>
 </html>
