@@ -64,7 +64,11 @@ nav {
     transition: 0.3s;
 }
 
-.nav-links a:hover, .nav-links a.active {
+.nav-links a:hover {
+    color: var(--primary-red);
+}
+
+.nav-links a.active {
     color: var(--text-white);
     border-bottom: 2px solid var(--primary-red);
 }
@@ -253,7 +257,7 @@ body.light-theme .item-price {
 .nav-theme-btn:hover {
     color: var(--primary-red);
 
-    /* couleur texte clair */ 
+    /* texte cliar */ 
 body.light-theme .nav-links a,
 body.light-theme .hero p,
 body.light-theme .price-row span,
@@ -261,4 +265,113 @@ body.light-theme .nav-theme-btn,
 body.light-theme .qty-box button {
     color: #1a1a1a !important; 
 }
+/* page legal */ 
+}
+.site-footer {
+    background-color: #0f1014;
+    color: #b3b3b3;
+    padding: 50px 0 20px;
+    margin-top: 60px;
+    border-top: 2px solid #2a2c35;
+}
+
+.footer-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    gap: 30px;
+}
+/*ecran tel */ 
+.footer-col {
+    flex: 1;
+    min-width: 200px;
+}
+
+.footer-logo {
+    height: 50px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+}
+
+.footer-col h3 {
+    color: #ffffff;
+    margin-bottom: 20px;
+    font-size: 18px;
+    text-transform: uppercase;
+}
+
+.footer-col ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-col ul li {
+    margin-bottom: 10px;
+}
+
+.footer-col ul li a {
+    color: #b3b3b3;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-col ul li a:hover {
+    color: #ff4757;
+}
+
+.payment-icons span {
+    display: inline-block;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    background: #1a1c24;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #333;
+}
+
+.footer-bottom {
+    text-align: center;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #2a2c35;
+    font-size: 14px;
+}
+
+/* pour le mode clair */ 
+
+body.light-theme .site-footer {
+    background-color: #ffffff;
+    border-top: 2px solid #ccc;
+    color: #555;
+}
+
+body.light-theme .footer-col h3 { color: #1a1a1a !important; }
+body.light-theme .footer-col ul li a { color: #555 !important; }
+body.light-theme .footer-col ul li a:hover { color: #ff4757 !important; }
+body.light-theme .footer-bottom { border-top: 1px solid #ccc; }
+body.light-theme .payment-icons span {
+    background: #f4f4f4;
+    border-color: #ccc;
+    color: #1a1a1a;
+}
+/* mod calir contact  */
+body.light-theme .contact-wrapper {
+    background-color: #ffffff !important;
+    border-color: #ccc !important;
+}
+
+body.light-theme .contact-wrapper input,
+body.light-theme .contact-wrapper textarea {
+    background-color: #f4f4f4 !important;
+    border-color: #ccc !important;
+    color: #1a1a1a !important;
+}
+
+body.light-theme .contact-wrapper label {
+    color: #1a1a1a !important;
 }

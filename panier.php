@@ -12,7 +12,7 @@ session_start();
 <body>
     <nav>
         <div class="logo-container"><a href="index.php"><img src="assets/img/logo.jpg" alt="Logo" class="site-logo"></a></div>
-        <div class="nav-links"><a href="index.php">Accueil</a></div>
+        <div class="nav-links"><a href="index.php">Accueil</a> <a href="contact.php">Contact</a></div>
         <button id="theme-toggle" class="nav-theme-btn">Mode Clair</button>
     </nav>
 
@@ -63,8 +63,45 @@ session_start();
                 </div>
                 <a href="https://buy.stripe.com/test_fZucN49uZ5zf6UG0u13gk00" class="btn-hero checkout-btn" style="display: block; margin-top: 20px; background-color: #635bff;">PASSER AU PAIEMENT SÉCURISÉ</a>
             </div>
-        </div>
     </div>
+    
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-col">
+                <img src="assets/img/logo.jpg" alt="Logo Digital Games" class="footer-logo">
+                <p>Votre boutique N°1 de clés CD officielles. Livraison instantanée, prix imbattables et paiements 100% sécurisés.</p>
+            </div>
+            <div class="footer-col">
+                <h3>Liens Rapides</h3>
+                <ul>
+                    <li><a href="index.php">Accueil</a></li>
+                    <li><a href="#">Catalogue PC</a></li>
+                    <li><a href="#">Promotions</a></li>
+                    <li><a href="panier.php">Mon Panier</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Informations</h3>
+                <ul>
+                    <li><a href="mentions-legales.php">Mentions Légales</a></li>
+                    <li><a href="cgv.php">Conditions Générales de Vente</a></li>
+                    <li><a href="#">Politique de Confidentialité</a></li>
+                    <li><a href="contact.php">Contactez-nous</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Paiement Sécurisé</h3>
+                <div class="payment-icons">
+                    <span>Carte Bancaire</span>
+                    <span>PayPal</span>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; <?php echo date('Y'); ?> Digital Games. Projet BTS - Tous droits réservés.</p>
+        </div>
+    </footer>
+
     <script src="assets/js/main.js"></script>
 </body>
 </html>

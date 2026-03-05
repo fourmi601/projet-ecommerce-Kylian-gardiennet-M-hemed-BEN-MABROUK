@@ -1,15 +1,40 @@
 <?php
+session_start();
 
-require_once 'db.php'; 
+/* vide : 
+https://youtu.be/37KohMnlP7Q?si=fMdK7PtGlx2lzufJ
+*/
+  
 
-/*jeu base données*/
-try {
-    $sql = "SELECT * FROM jeu";
-    $query = $pdo->query($sql);
-    $jeux = $query->fetchAll();
-} catch (Exception $e) {
-    $jeux = []; /* test jeu*/
-}
+/* a retire apres base de données */
+$jeux = [
+    [
+        'id_jeu' => 1,
+        'titre' => 'Elden Ring',
+        'description' => 'Plongez dans l\'Entre-Terre et devenez le Seigneur d\'Elden dans ce jeu de rôle d\'action épique.',
+        'prix' => 41.99,
+        'image' => 'elden.jpg',
+        'plateforme' => 'PC'
+    ],
+    [
+        'id_jeu' => 2,
+        'titre' => 'EA Sports FC 24',
+        'description' => 'Vivez l\'expérience ultime de football avec plus de 19 000 joueurs sous licence.',
+        'prix' => 34.99,
+        'image' => 'fc24.jpg',
+        'plateforme' => 'PC'
+    ],
+    [
+        'id_jeu' => 3,
+        'titre' => 'Cyberpunk 2077',
+        'description' => 'Un jeu de rôle d\'action en monde ouvert se déroulant dans la mégalopole de Night City.',
+        'prix' => 29.99,
+        'image' => 'logo.jpg',
+        'plateforme' => 'PC'
+    ]
+];
+
+/* fin a retire apres base de données */
 ?>
 
 <!DOCTYPE html>
@@ -38,6 +63,7 @@ try {
             <a href="#">Catalogue PC</a>
             <button id="theme-toggle" class="nav-theme-btn">Mode Clair</button>
             <a href="#">Promos</a>
+            <a href="contact.php">Contact</a>
         </div>
 
         <div class="user-actions">
@@ -82,6 +108,50 @@ try {
             <?php endif; ?>
         </div>
     </section>
+
+    <footer class="site-footer">
+        <div class="footer-container">
+            
+            <div class="footer-col">
+                <img src="assets/img/logo.jpg" alt="Logo Digital Games" class="footer-logo">
+                <p>Votre boutique N°1 de clés CD officielles. Livraison instantanée, prix imbattables et paiements 100% sécurisés.</p>
+            </div>
+
+            <div class="footer-col">
+                <h3>Liens Rapides</h3>
+                <ul>
+                    <li><a href="index.php">Accueil</a></li>
+                    <li><a href="#">Catalogue PC</a></li>
+                    <li><a href="#">Promotions</a></li>
+                    <li><a href="panier.php">Mon Panier</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h3>Informations</h3>
+                <ul>
+                    <li><a href="mentions-legales.php">Mentions Légales</a></li>
+                    <li><a href="cgv.php">Conditions Générales de Vente</a></li>
+                    <li><a href="#">Politique de Confidentialité</a></li>
+                    <li><a href="contact.php">Contactez-nous</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h3>Paiement Sécurisé</h3>
+                <div class="payment-icons">
+                    <span>💳 Carte Bancaire</span>
+                    <span>🅿️ PayPal</span>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; <?php echo date('Y'); ?> Digital Games. Projet BTS - Tous droits réservés.</p>
+        </div>
+    </footer>
+
     <script src="assets/js/main.js"></script>
 </body>
 </html>
