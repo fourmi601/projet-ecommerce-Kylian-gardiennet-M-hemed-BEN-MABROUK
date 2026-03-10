@@ -8,6 +8,12 @@ CREATE TABLE categorie (
   id_cat int(11) NOT NULL,
   nom_cat varchar(50) DEFAULT NULL
 );
+INSERT INTO categories (nom,description)
+  VALUES (FPS, Jeux à la première personne),
+  (Sport, Jeux de sport),
+  (Histoire, Jeux ),
+  (Aventure, Jeux exploration);
+
 
 
 
