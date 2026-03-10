@@ -101,7 +101,7 @@ session_start();
             </p>
 
             <p style="margin-top: 40px; text-align: center; color: var(--text-grey);">
-                Dernière mise à jour : <?php echo date('d/m/Y'); ?>
+                Dernière mise à jour :  <?php echo date('d/m/Y'); ?>
             </p>
         </div>
     </div>

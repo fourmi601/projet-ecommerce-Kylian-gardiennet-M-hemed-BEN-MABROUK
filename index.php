@@ -34,7 +34,7 @@ $jeux = [
     ]
 ];
 
-/* fin a retire apres base de données */
+/* <- retire apres base de données */
 ?>
 
 <!DOCTYPE html>
@@ -67,8 +67,8 @@ $jeux = [
         </div>
 
         <div class="user-actions">
-            <a href="#">👤 Compte</a>
-            <a href="panier.php" class="cart-btn">🛒 Panier (0)</a>
+            <a href="#">Compte</a>
+            <a href="panier.php" class="cart-btn">Panier (0)</a>
         </div>
     </nav>
 
@@ -140,8 +140,8 @@ $jeux = [
             <div class="footer-col">
                 <h3>Paiement Sécurisé</h3>
                 <div class="payment-icons">
-                    <span>💳 Carte Bancaire</span>
-                    <span>🅿️ PayPal</span>
+                    <span>Carte Bancaire</span>
+                    <span>PayPal</span>
                 </div>
             </div>
 
