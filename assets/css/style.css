@@ -893,3 +893,65 @@ body.light-theme .contact-wrapper label {
     .games-grid { grid-template-columns: repeat(2, 1fr); }
     .user-actions { display: none; }
 }
+
+/* Page jeu css */
+
+.game-details-grid {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+}
+
+.game-image-large {
+    flex: 1;
+    max-width: 150px;
+}
+
+.game-info-large {
+    flex: 2;
+}
+
+@media (max-width: 768px) {
+    .game-details-grid {
+        flex-direction: column;
+    }
+    .game-image-large {
+        max-width: 100%;
+    }
+}
+
+body.light-theme .game-buy-box {
+    background: #f9f9f9 !important;
+    border-color: #ccc !important;
+}
+body.light-theme .game-description h3 {
+    color: #1a1a1a !important;
+    border-bottom-color: #ccc !important;
+}
+
+/* lien jeu carte */ 
+
+.game-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.2s;
+}
+
+.game-link:hover {
+    transform: scale(1.03);
+}
+
+/* clair page jeu */ 
+
+body.light-theme .game-info-large h1 {
+    color: #1a1a1a !important;
+}
+
+body.light-theme .game-meta {
+    color: #555 !important;
+}
+
+body.light-theme .game-description p {
+    color: #333 !important;
+}
