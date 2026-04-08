@@ -1,1 +1,4 @@
 système de wishlis avec notif
+ajoute de jeu via compte admin directement avec application de propo et de code promo 
+système de code promo
+mode sombre/clair fonctiobn parametre navigateur

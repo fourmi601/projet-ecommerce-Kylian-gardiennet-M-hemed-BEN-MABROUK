@@ -29,10 +29,22 @@ session_start();
             <a href="contact.php" class="active">Contact</a>
         </div>
 
-        <div class="user-actions">
-            <a href="#">Compte</a>
-            <a href="panier.php" class="cart-btn">Panier (0)</a>
-        </div>
+       <div class="user-actions">
+    <?php if (isset($_SESSION['user_id'])): ?>
+        
+        <?php if ($_SESSION['role'] === 'admin'): ?>
+            <a href="admin.php" style="color: #2ecc71; font-weight: bold;">⚙️ Admin</a>
+        <?php endif; ?>
+
+        <a href="#" class="active">👤 Salut <?php echo htmlspecialchars($_SESSION['pseudo']); ?></a>
+        <a href="deconnexion.php" style="color: #ff4757;">Déconnexion</a>
+        
+    <?php else: ?>
+        <a href="connexion.php" class="active">👤 Compte</a>
+    <?php endif; ?>
+    
+    <a href="panier.php" class="cart-btn">🛒 Panier</a>
+</div>
     </nav>
 
     <div class="container" style="max-width: 800px; margin-top: 50px; margin-bottom: 50px;">
