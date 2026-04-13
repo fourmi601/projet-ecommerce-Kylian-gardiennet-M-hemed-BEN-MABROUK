@@ -61,12 +61,11 @@ if (isset($_SESSION['user_id'])) {
         </div>
 
         <div class="nav-links">
-            <a href="index.php" class="active">Accueil</a>
-            <a href="#">Catalogue PC</a>
-            <button id="theme-toggle" class="nav-theme-btn">Mode Clair</button>
-            <a href="#">Promos</a>
-            <a href="contact.php">Contact</a>
-        </div>
+    <a href="index.php" class="active">Accueil</a>
+    <a href="catalogue.php">Catalogue</a>
+    <a href="#">Promos</a>
+    <a href="contact.php">Contact</a>
+</div>
 
       <div class="user-actions">
             <?php if (isset($_SESSION['user_id'])): ?>
@@ -210,8 +209,8 @@ if (isset($_SESSION['user_id'])) {
             toast: true,
             position: 'bottom-end',
             showConfirmButton: false,
-            showCloseButton: true, // ❌ LA PETITE CROIX EST ICI !
-            timer: 7000, // Je l'ai mis sur 7 secondes
+            showCloseButton: true,
+            timer: 7000,
             timerProgressBar: true,
             background: '#1a1c24',
             color: '#fff',

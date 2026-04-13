@@ -2,14 +2,33 @@
 session_start();
 require 'db.php';
 
-if (!isset($_SESSION['user_id']) || empty($_SESSION['panier'])) { header('Location: index.php'); exit(); }
+// 1. Vérification de la session et du panier
+if (!isset($_SESSION['user_id']) || empty($_SESSION['panier'])) { 
+    header('Location: index.php'); 
+    exit(); 
+}
+
+// --- 2. NOUVEAU : RÉCUPÉRATION DU RETOUR DE LA BANQUE ---
+$status = $_GET['status'] ?? '';
+$token_banque = $_GET['token'] ?? '';
+
+// Si le statut n'est pas "success" ou qu'il n'y a pas de token, on bloque la création des clés !
+if ($status !== 'success' || empty($token_banque)) {
+    die("<div style='background:#1a1c24; color:white; padding:40px; text-align:center; font-family:sans-serif;'>
+            <h1 style='color:#ff4757;'>❌ Erreur de paiement</h1>
+            <p>La transaction n'a pas été validée par la banque ou le jeton est manquant.</p>
+            <a href='panier.php' style='color:#3498db;'>Retourner au panier</a>
+         </div>");
+}
+// --------------------------------------------------------
 
 $id_user = $_SESSION['user_id'];
 $total = $_SESSION['total_a_payer'];
 $date_achat = date('Y-m-d H:i:s');
-$cles_generees = []; // On va stocker les clés ici pour les afficher
+$cles_generees = []; 
 
 try {
+    // 3. Création de la commande
     $pdo->prepare("INSERT INTO commande (date_achat, prix_total, id_user) VALUES (?, ?, ?)")->execute([$date_achat, $total, $id_user]);
     $id_commande = $pdo->lastInsertId();
 
@@ -22,18 +41,21 @@ try {
     
     $stmtContenir = $pdo->prepare("INSERT INTO contenir (id_jeu, id_commande, prix_achat, cle_cd) VALUES (?, ?, ?, ?)");
 
+    // 4. Génération des clés
     foreach ($jeux->fetchAll() as $jeu) {
         $quantite = $_SESSION['panier'][$jeu['id_jeu']];
         for ($i = 0; $i < $quantite; $i++) {
             $cle_unique = genererCleCD();
             $stmtContenir->execute([$jeu['id_jeu'], $id_commande, $jeu['prix'], $cle_unique]);
             
-            // On garde les infos pour les afficher en bas !
             $cles_generees[] = ['titre' => $jeu['titre'], 'image' => $jeu['image'], 'cle' => $cle_unique];
         }
     }
 
-    unset($_SESSION['panier']); unset($_SESSION['total_a_payer']); if(isset($_SESSION['promo'])) unset($_SESSION['promo']);
+    // 5. On vide le panier
+    unset($_SESSION['panier']); 
+    unset($_SESSION['total_a_payer']); 
+    if(isset($_SESSION['promo'])) unset($_SESSION['promo']);
 
 } catch (Exception $e) { die("Erreur : " . $e->getMessage()); }
 ?>
@@ -54,6 +76,11 @@ try {
 <body style="background: #0b0c10; color: white; font-family: 'Rajdhani', sans-serif;">
     <div class="container" style="max-width: 800px; margin: 50px auto; background: #1a1c24; padding: 40px; border-radius: 8px;">
         <h1 style="color: #2ecc71; text-align: center;">✅ Commande N°<?php echo $id_commande; ?> réussie !</h1>
+        
+        <p style="text-align: center; color: #666; font-size: 14px; margin-top: -10px;">
+            Transaction bancaire : <?php echo htmlspecialchars($token_banque); ?>
+        </p>
+
         <p style="text-align: center; color: #b3b3b3;">Cliquez sur la zone floutée pour révéler et copier votre clé CD.</p>
 
         <div style="margin-top: 40px;">
@@ -74,15 +101,15 @@ try {
         </div>
         
         <div style="text-align: center; margin-top: 40px;">
-            <a href="bibliotheque.php" class="btn-hero" style="text-decoration: none;">ACTIVER MON JEU DANS MA BIBLIOTHÈQUE</a>
+            <a href="bibliotheque.php" class="btn-hero" style="text-decoration: none; padding: 15px 30px; background: #2ecc71; color: white; border-radius: 4px; font-weight: bold;">ACTIVER MON JEU DANS MA BIBLIOTHÈQUE</a>
         </div>
     </div>
 
     <script>
         function copierCle(cle, element) {
             navigator.clipboard.writeText(cle).then(() => {
-                element.className = 'cle-visible'; // Enlève le flou
-                element.innerText = cle + " (Copié !)"; // Affiche copié
+                element.className = 'cle-visible';
+                element.innerText = cle + " (Copié !)";
                 setTimeout(() => { element.innerText = cle; }, 2000);
             });
         }

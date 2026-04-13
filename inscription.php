@@ -1,31 +1,75 @@
-<<?php 
+<?php 
 session_start();
-require 'db.php'; // On branche le câble à la base de données
+// OBLIGATOIRE : On garde les deux fichiers de connexion !
+require 'db.php'; 
+require_once 'marchands-config.php';
 
 $erreur = '';
+$succes = '';
 
-// Si le formulaire est envoyé
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $pseudo = $_POST['pseudo'];
-    $email = $_POST['email'];
-    $password = $_POST['password'];
+    $pseudo   = $_POST['pseudo'] ?? '';
+    $email    = $_POST['email'] ?? '';
+    $password = $_POST['password'] ?? '';
 
-    // 1. On vérifie si l'email n'est pas déjà pris
-    $check = $pdo->prepare("SELECT id_user FROM utilisateur WHERE email = ?");
-    $check->execute([$email]);
-    
-    if ($check->fetch()) {
-        $erreur = "Cet email est déjà utilisé !";
+    if (empty($pseudo) || empty($email) || empty($password)) {
+        $erreur = "Veuillez remplir tous les champs.";
     } else {
-        // 2. L'email est libre, on insère le nouveau membre !
-        $stmt = $pdo->prepare("INSERT INTO utilisateur (pseudo, email, password, role) VALUES (?, ?, ?, 'client')");
         
-        if ($stmt->execute([$pseudo, $email, $password])) {
-            // Succès ! On redirige vers la page de connexion
-            header('Location: connexion.php');
-            exit();
+        // 1. On vérifie sur TON site si l'email existe déjà
+        $check = $pdo->prepare("SELECT id_user FROM utilisateur WHERE email = ?");
+        $check->execute([$email]);
+        
+        if ($check->fetch()) {
+            $erreur = "Cet email est déjà utilisé sur Digital Games !";
         } else {
-            $erreur = "Une erreur est survenue lors de l'inscription.";
+            
+            // 2. On contacte l'API de ton pote (Ecotech Bank)
+            $data = json_encode([
+                'username' => $pseudo,
+                'email'    => $email,
+                'password' => $password
+            ]);
+
+            $ch = curl_init(ECOTECH_API_URL);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'Content-Length: ' . strlen($data),
+                'X-API-KEY: ' . ECOTECH_API_KEY
+            ]);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+
+            if ($response === false) {
+                $erreur = "Le serveur Ecotech est injoignable : " . $curlError;
+            } else {
+                $resultat = json_decode($response, true);
+
+                if (isset($resultat['status']) && $resultat['status'] === 'success') {
+                    
+                    // 3. LA BANQUE A DIT OUI ! On insère dans TA base de données locale.
+                    $password_hashed = password_hash($password, PASSWORD_DEFAULT);
+                    $stmt = $pdo->prepare("INSERT INTO utilisateur (pseudo, email, password, role) VALUES (?, ?, ?, 'client')");
+                    
+                    if ($stmt->execute([$pseudo, $email, $password_hashed])) {
+                        // SUCCÈS !
+                        $succes = $resultat['message'] . " Redirection en cours...";
+                        header('Refresh: 3; url=connexion.php');
+                    } else {
+                        $erreur = "Compte bancaire créé, mais erreur lors de l'enregistrement sur la boutique.";
+                    }
+                } else {
+                    $erreur = $resultat['message'] ?? "L'API a refusé l'inscription.";
+                }
+            }
         }
     }
 }
@@ -78,11 +122,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div style="background: var(--bg-panel, #1a1c24); padding: 40px; border-radius: 8px; border: 1px solid #2a2c35; width: 100%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
             <h1 style="color: #fff; text-align: center; margin-bottom: 30px; font-size: 32px;">Créer un compte</h1>
             
-            <form action="#" method="POST" style="display: flex; flex-direction: column; gap: 20px;">
+            <?php if ($erreur): ?>
+                <div style="background: rgba(255, 71, 87, 0.1); border: 1px solid #ff4757; color: #ff4757; padding: 12px; border-radius: 4px; text-align: center; margin-bottom: 20px; font-size: 14px;">
+                 <?php echo htmlspecialchars($erreur); ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($succes): ?>
+                <div style="background: rgba(46, 204, 113, 0.1); border: 1px solid #2ecc71; color: #2ecc71; padding: 12px; border-radius: 4px; text-align: center; margin-bottom: 20px; font-size: 14px;">
+                    <?php echo htmlspecialchars($succes); ?>
+                </div>
+            <?php endif; ?>
+
+            <form action="inscription.php" method="POST" style="display: flex; flex-direction: column; gap: 20px;">
                 
                 <div>
                     <label style="color: #b3b3b3; font-size: 14px; margin-bottom: 5px; display: block;">Pseudo</label>
-                    <input type="text" name="pseudo" placeholder="Kouakou" required style="width: 100%; padding: 12px; border-radius: 4px; border: 1px solid #333; background: #2a2c35; color: white; font-family: 'Rajdhani', sans-serif; font-size: 16px; box-sizing: border-box;">
+                    <input type="text" name="pseudo" placeholder="Ex: Kouakou" required style="width: 100%; padding: 12px; border-radius: 4px; border: 1px solid #333; background: #2a2c35; color: white; font-family: 'Rajdhani', sans-serif; font-size: 16px; box-sizing: border-box;">
                 </div>
 
                 <div>

@@ -1,26 +1,56 @@
 <?php 
+// Ces deux lignes permettent d'afficher les erreurs au lieu d'une page blanche !
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
-require 'db.php';
+require 'db.php'; // Ta connexion locale à TOI
+require_once 'marchands-config.php';
+
 $erreur = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    $stmt = $pdo->prepare("SELECT * FROM utilisateur WHERE email = ?");
-    $stmt->execute([$email]);
-    $user = $stmt->fetch();
+   try {
+        // 1. On se connecte à la base de ton pote (Ecotech Bank)
+        $pdo_bank = new PDO("mysql:host=100.65.154.19;dbname=ecotech_db;charset=utf8mb4", "dev_remote", "ezechiel", [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]);
 
-   if ($user && $user['password'] === $password) {
-        
-        $_SESSION['user_id'] = $user['id_user'];
-        $_SESSION['pseudo'] = $user['pseudo'];
-        $_SESSION['role'] = $user['role'];
-        
-        header('Location: index.php');
-        exit();
-    } else {
-        $erreur = "Adresse e-mail ou mot de passe incorrect.";
+        // 2. On récupère UNIQUEMENT l'utilisateur par son email
+        $stmt_bank = $pdo_bank->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt_bank->execute([$email]);
+        $user_bank = $stmt_bank->fetch();
+
+        // 3. LA MAGIE EST ICI : On utilise password_verify() pour comparer le mot de passe tapé avec celui crypté dans sa base
+        if ($user_bank && password_verify($password, $user_bank['password'])) {
+            
+            // 4. C'est le bon mot de passe ! On cherche son rôle dans TA base (Digital Games)
+            $stmt_local = $pdo->prepare("SELECT * FROM utilisateur WHERE email = ?");
+            $stmt_local->execute([$email]);
+            $user_local = $stmt_local->fetch();
+
+            if ($user_local) {
+                // Succès ! On crée la session avec TES données
+                $_SESSION['user_id'] = $user_local['id_user'];
+                $_SESSION['pseudo']  = $user_local['pseudo'];
+                $_SESSION['role']    = $user_local['role'];
+                
+                header('Location: index.php');
+                exit();
+            } else {
+                $erreur = "Compte bancaire valide, mais vous n'êtes pas inscrit sur Digital Games.";
+            }
+
+        } else {
+            $erreur = "Adresse e-mail ou mot de passe incorrect (Refusé par Ecotech Bank).";
+        }
+
+    } catch (PDOException $e) {
+        $erreur = "Impossible de joindre le serveur bancaire : " . $e->getMessage();
     }
 }
 ?>
@@ -46,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <div class="nav-links">
             <a href="index.php">Accueil</a>
-            <a href="#">Catalogue PC</a>
+            <a href="catalogue.php">Catalogue</a>
             <button id="theme-toggle" class="nav-theme-btn">Mode Clair</button>
             <a href="contact.php">Contact</a>
         </div>

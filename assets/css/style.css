@@ -983,3 +983,41 @@ body.light-theme input {
 .game-card { position: relative; overflow: hidden; }
 .btn-wishlist { position: absolute; top: 10px; right: 10px; z-index: 10; background: rgba(0,0,0,0.6); padding: 5px 8px; border-radius: 50%; text-decoration: none; font-size: 20px; transition: 0.2s; }
 .btn-wishlist:hover { transform: scale(1.1); background: rgba(0,0,0,0.8); }
+
+/* mode c/s auto */
+/* ========================================================= */
+/* 🌓 THÈME CLAIR AUTOMATIQUE (Si le navigateur le demande)  */
+/* ========================================================= */
+
+@media (prefers-color-scheme: light) {
+        body {
+        background-color: #f4f6f9 !important;
+        color: #2c3e50 !important;
+    }
+
+    nav, .site-footer {
+        background-color: #ffffff !important;
+        border-bottom: 1px solid #e1e8ed !important;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .game-card, aside, section {
+        background-color: #ffffff !important;
+        border: 1px solid #e1e8ed !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    .game-card h3, section h2 {
+        color: #1a1c24 !important;
+    }
+    
+    .game-card .desc, label {
+        color: #666666 !important;
+    }
+
+    input, select, textarea {
+        background-color: #ffffff !important;
+        color: #333333 !important;
+        border: 1px solid #ccc !important;
+    }
+}
