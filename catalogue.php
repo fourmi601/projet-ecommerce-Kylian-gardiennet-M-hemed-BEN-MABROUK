@@ -149,9 +149,10 @@ $jeux = $stmt->fetchAll();
                             <?php endif; ?>
 
                             <div class="card-image">
-                                <img src="assets/img/<?php echo htmlspecialchars($jeu['image']); ?>" alt="<?php echo htmlspecialchars($jeu['titre']); ?>">
-                                <span class="platform-tag"><?php echo htmlspecialchars($jeu['nom_cat']); ?></span>
-                            </div>
+    <a href="jeu.php?id=<?php echo $jeu['id_jeu']; ?>">
+        <img src="assets/img/<?php echo htmlspecialchars($jeu['image']); ?>" alt="<?php echo htmlspecialchars($jeu['titre']); ?>">
+    </a> <span class="platform-tag"><?php echo htmlspecialchars($jeu['nom_cat']); ?></span>
+</div>
                             
                             <div class="card-info">
                                 <h3><?php echo htmlspecialchars($jeu['titre']); ?></h3>

@@ -12,40 +12,7 @@ session_start();
 </head>
 <body>
 
-    <nav>
-        <div class="logo-container">
-            <a href="index.php"><img src="assets/img/logo.jpg" alt="Logo Digital Games" class="site-logo"></a>
-        </div>
-        
-        <div class="search-box">
-            <input type="text" placeholder="Rechercher...">
-            <button>🔍</button>
-        </div>
-
-        <div class="nav-links">
-            <a href="index.php">Accueil</a>
-            <a href="#">Catalogue PC</a>
-            <button id="theme-toggle" class="nav-theme-btn">Mode Clair</button>
-            <a href="contact.php" class="active">Contact</a>
-        </div>
-
-       <div class="user-actions">
-    <?php if (isset($_SESSION['user_id'])): ?>
-        
-        <?php if ($_SESSION['role'] === 'admin'): ?>
-            <a href="admin.php" style="color: #2ecc71; font-weight: bold;">⚙️ Admin</a>
-        <?php endif; ?>
-
-        <a href="#" class="active">👤 Salut <?php echo htmlspecialchars($_SESSION['pseudo']); ?></a>
-        <a href="deconnexion.php" style="color: #ff4757;">Déconnexion</a>
-        
-    <?php else: ?>
-        <a href="connexion.php" class="active">👤 Compte</a>
-    <?php endif; ?>
-    
-    <a href="panier.php" class="cart-btn">🛒 Panier</a>
-</div>
-    </nav>
+      <?php include 'navbar.php'; ?>
 
     <div class="container" style="max-width: 800px; margin-top: 50px; margin-bottom: 50px;">
         <h2 class="section-title">Contactez-nous</h2>

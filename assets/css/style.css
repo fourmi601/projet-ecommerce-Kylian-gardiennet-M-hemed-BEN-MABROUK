@@ -1021,3 +1021,31 @@ body.light-theme input {
         border: 1px solid #ccc !important;
     }
 }
+
+/* SYSTEME D'ETOile */
+
+.star-rating {
+    display: inline-block;
+    position: relative;
+    font-size: 20px; 
+    font-family: Times;
+    line-height: 1;
+}
+/* etoiles grois*/ 
+.star-rating::before {
+    content: "★★★★★";
+    color: #444; 
+}
+
+.star-rating-inner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    color: #f1c40f; 
+}
+
+.star-rating-inner::before {
+    content: "★★★★★";
+}

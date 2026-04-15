@@ -15,8 +15,8 @@ https://youtu.be/37KohMnlP7Q?si=fMdK7PtGlx2lzufJ
 $stmt = $pdo->query("
     SELECT jeu.*, categorie.nom_cat 
     FROM jeu 
-    JOIN categorie ON jeu.id_cat = categorie.id_cat 
-    ORDER BY id_jeu DESC
+    LEFT JOIN categorie ON jeu.id_cat = categorie.id_cat 
+    ORDER BY jeu.ventes DESC, jeu.id_jeu DESC
 ");
 $jeux = $stmt->fetchAll();
 
@@ -50,53 +50,7 @@ if (isset($_SESSION['user_id'])) {
 </head>
 <body>
 
-    <nav>
-        <div class="logo-container">
-            <img src="assets/img/logo.jpg" alt="Logo Digital Games" class="site-logo">
-        </div>
-        
-        <div class="search-box">
-            <input type="text" placeholder="Rechercher...">
-            <button>🔍</button>
-        </div>
-
-        <div class="nav-links">
-    <a href="index.php" class="active">Accueil</a>
-    <a href="catalogue.php">Catalogue</a>
-    <a href="#">Promos</a>
-    <a href="contact.php">Contact</a>
-</div>
-
-      <div class="user-actions">
-            <?php if (isset($_SESSION['user_id'])): ?>
-                
-               <a href="wishlist.php" style="position: relative; text-decoration: none; font-size: 24px; margin-right: 20px; display: inline-block;">
-    🔔
-    <?php if ($nb_promos_wishlist > 0): ?>
-        <span style="position: absolute; top: -5px; right: -8px; background: #ff4757; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">
-            <?php echo $nb_promos_wishlist; ?>
-        </span>
-    <?php endif; ?>
-</a>
-
-                <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
-                    <a href="admin.php" style="color: #2ecc71; font-weight: bold;">⚙️ Admin</a>
-                <?php endif; ?>
-
-                <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'tiers'): ?>
-                    <a href="vendeur.php" style="color: #f39c12; font-weight: bold;">🏪 Espace Vendeur</a>
-                <?php endif; ?>
-
-                <a href="mon_compte.php" class="active">👤 Salut <?php echo htmlspecialchars($_SESSION['pseudo'] ?? 'Membre'); ?></a>
-                <a href="deconnexion.php" style="color: #ff4757;">Déconnexion</a>
-                
-            <?php else: ?>
-                <a href="connexion.php" class="active">👤 Compte</a>
-            <?php endif; ?>
-            
-            <a href="panier.php" class="cart-btn">🛒 Panier (<?php echo $nb_articles; ?>)</a>
-        </div>
-    </nav>
+    <?php include 'navbar.php'; ?>
 
     <header class="hero">
         <div class="hero-content">
@@ -123,10 +77,12 @@ if (isset($_SESSION['user_id'])) {
                             </a>
                         <?php endif; ?>
 
-                        <div class="card-image">
-                            <img src="assets/img/<?php echo htmlspecialchars($jeu['image']); ?>" alt="<?php echo htmlspecialchars($jeu['titre']); ?>">
-                            <span class="platform-tag"><?php echo htmlspecialchars($jeu['nom_cat']); ?></span>
-                        </div>
+                       <div class="card-image">
+    <a href="jeu.php?id=<?php echo $jeu['id_jeu']; ?>">
+        
+        <img src="assets/img/<?php echo htmlspecialchars($jeu['image']); ?>" alt="<?php echo htmlspecialchars($jeu['titre']); ?>">
+    </a> <span class="platform-tag"><?php echo htmlspecialchars($jeu['nom_cat']); ?></span>
+</div>
                         
                         <div class="card-info">
                             <h3><?php echo htmlspecialchars($jeu['titre']); ?></h3>

@@ -15,6 +15,97 @@ $message = '';
 // --- TRAITEMENT DES FORMULAIRES ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
+  // ========================================================
+    // 🪄 IMPORTATION MAGIQUE DEPUIS STEAM (CATÉGORIE + DATE)
+    // ========================================================
+    if (isset($_POST['action']) && $_POST['action'] === 'import_steam') {
+        $id_steam_import = (int)$_POST['import_id_steam'];
+        
+        $url = "https://store.steampowered.com/api/appdetails?appids={$id_steam_import}&l=french";
+        $reponse = @file_get_contents($url);
+        
+        if ($reponse) {
+            $data = json_decode($reponse, true);
+            if (isset($data[$id_steam_import]['success']) && $data[$id_steam_import]['success']) {
+                $jeu_steam = $data[$id_steam_import]['data'];
+                
+                $titre = $jeu_steam['name'];
+                $description = strip_tags($jeu_steam['short_description']); 
+                
+                // GESTION AUTOMATIQUE DE LA CATÉGORIE
+                $id_cat_import = 1;
+                if (isset($jeu_steam['genres']) && count($jeu_steam['genres']) > 0) {
+                    $nom_genre_steam = $jeu_steam['genres'][0]['description']; 
+                    $verifCat = $pdo->prepare("SELECT id_cat FROM categorie WHERE nom_cat = ?");
+                    $verifCat->execute([$nom_genre_steam]);
+                    $catExistante = $verifCat->fetch();
+                    
+                    if ($catExistante) {
+                        $id_cat_import = $catExistante['id_cat']; 
+                    } else {
+                        $insertCat = $pdo->prepare("INSERT INTO categorie (nom_cat) VALUES (?)");
+                        $insertCat->execute([$nom_genre_steam]);
+                        $id_cat_import = $pdo->lastInsertId();
+                    }
+                }
+
+                // GESTION DU PRIX (0 si pas encore annoncé)
+                $prix = isset($jeu_steam['price_overview']) ? ($jeu_steam['price_overview']['initial'] / 100) : 0;
+                
+                // --- NOUVEAU : GESTION AUTOMATIQUE DE LA DATE DE SORTIE ---
+                $date_sortie_import = null;
+                if (isset($jeu_steam['release_date']) && !empty($jeu_steam['release_date']['date'])) {
+                    $date_brute = $jeu_steam['release_date']['date'];
+                    // On traduit les mois français pour que PHP comprenne la date
+                    $date_anglaise = str_replace(
+                        ['janv.', 'févr.', 'avr.', 'juil.', 'sept.', 'oct.', 'nov.', 'déc.'], 
+                        ['jan', 'feb', 'apr', 'jul', 'sep', 'oct', 'nov', 'dec'], 
+                        $date_brute
+                    );
+                    $timestamp = strtotime($date_anglaise);
+                    
+                    // Si Steam donne une vraie date (ex: "15 nov. 2025"), on l'enregistre
+                    if ($timestamp) {
+                        $date_sortie_import = date('Y-m-d H:i:s', $timestamp);
+                    }
+                }
+                // -----------------------------------------------------------
+                
+                // TÉLÉCHARGEMENT DE L'IMAGE
+                $image_url = $jeu_steam['header_image'];
+                $image_name = 'steam_' . $id_steam_import . '.jpg';
+                $image_data = @file_get_contents($image_url);
+                if ($image_data) {
+                    file_put_contents('assets/img/' . $image_name, $image_data);
+                } else {
+                    $image_name = 'default.jpg';
+                }
+                
+                // 1. On insère le jeu AVEC LA DATE DE SORTIE
+                $stmt = $pdo->prepare("INSERT INTO jeu (titre, description, prix, image, id_cat, id_steam, date_sortie) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$titre, $description, $prix, $image_name, $id_cat_import, $id_steam_import, $date_sortie_import]);
+                
+                $nouveau_jeu_id = $pdo->lastInsertId();
+
+                // 2. On insère les plateformes cochées
+                if (!empty($_POST['import_plateformes'])) {
+                    $stmtPlat = $pdo->prepare("INSERT INTO jeu_plateforme (id_jeu, id_plateforme) VALUES (?, ?)");
+                    foreach ($_POST['import_plateformes'] as $id_plat) {
+                        $stmtPlat->execute([$nouveau_jeu_id, $id_plat]);
+                    }
+                }
+                
+                $msg_date = $date_sortie_import ? "Date détectée : " . date('d/m/Y', strtotime($date_sortie_import)) : "Aucune date précise.";
+                $message = "🪄 MAGIE ! <strong>{$titre}</strong> importé ! ($msg_date)";
+            } else {
+                $message = "❌ Erreur : Ce jeu n'existe pas ou l'ID est invalide.";
+            }
+        } else {
+            $message = "❌ Erreur de connexion à Steam.";
+        }
+    }
+    // ========================================================
+
     if (isset($_POST['action']) && $_POST['action'] === 'remove_game_promo') {
         $id_j = $_POST['id_jeu'];
         $pdo->prepare("UPDATE jeu SET prix_solde = 0 WHERE id_jeu = ?")->execute([$id_j]);
@@ -29,20 +120,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id_cat = $_POST['id_cat'];
         $image_name = $_POST['old_image'] ?? 'default.jpg'; 
         
+        $id_steam = !empty($_POST['id_steam']) ? $_POST['id_steam'] : null;
+        $date_sortie = !empty($_POST['date_sortie']) ? $_POST['date_sortie'] : null;
+
         if (!empty($_FILES['image']['name'])) {
             $image_name = basename($_FILES["image"]["name"]);
             move_uploaded_file($_FILES["image"]["tmp_name"], "assets/img/" . $image_name);
         }
 
         if ($_POST['action'] === 'add_jeu') {
-            $stmt = $pdo->prepare("INSERT INTO jeu (titre, description, prix, prix_solde, image, id_cat) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$titre, $description, $prix, $prix_solde, $image_name, $id_cat]);
+            $stmt = $pdo->prepare("INSERT INTO jeu (titre, description, prix, prix_solde, image, id_cat, id_steam, date_sortie) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$titre, $description, $prix, $prix_solde, $image_name, $id_cat, $id_steam, $date_sortie]);
             $id_jeu = $pdo->lastInsertId();
-            $message = "✅ Jeu ajouté !";
+            $message = "✅ Jeu ajouté manuellement !";
         } else {
             $id_jeu = $_POST['id_jeu'];
-            $stmt = $pdo->prepare("UPDATE jeu SET titre=?, description=?, prix=?, prix_solde=?, image=?, id_cat=? WHERE id_jeu=?");
-            $stmt->execute([$titre, $description, $prix, $prix_solde, $image_name, $id_cat, $id_jeu]);
+            $stmt = $pdo->prepare("UPDATE jeu SET titre=?, description=?, prix=?, prix_solde=?, image=?, id_cat=?, id_steam=?, date_sortie=? WHERE id_jeu=?");
+            $stmt->execute([$titre, $description, $prix, $prix_solde, $image_name, $id_cat, $id_steam, $date_sortie, $id_jeu]);
             $pdo->prepare("DELETE FROM jeu_plateforme WHERE id_jeu = ?")->execute([$id_jeu]);
             $message = "✅ Jeu modifié !";
         }
@@ -155,13 +249,16 @@ if (isset($_GET['edit'])) {
 </head>
 <body style="background: #0b0c10; color: white; font-family: 'Rajdhani', sans-serif;">
 
-    <nav style="padding: 20px; background: #1a1c24; display: flex; justify-content: space-between;">
-        <a href="index.php" style="color: #ff4757; text-decoration: none; font-weight: bold;">← RETOUR AU SITE</a>
-        <span>Connecté en tant que : <strong><?php echo htmlspecialchars($_SESSION['pseudo']); ?></strong></span>
-    </nav>
+    <?php include 'navbar.php'; ?>
 
     <div class="container" style="padding: 40px; max-width: 1400px; margin: auto;">
-        <h1 style="border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 30px;">⚙️ Administration Générale</h1>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 30px;">
+            <h1 style="margin: 0;">⚙️ Administration Générale</h1>
+            <a href="sync_steam.php" style="background: #3498db; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: bold; transition: 0.2s;">
+                🔄 Synchroniser les avis Steam
+            </a>
+        </div>
         
         <?php if($message): ?>
             <div style="background: #2ecc7120; border: 1px solid #2ecc71; color: #2ecc71; padding: 15px; border-radius: 4px; margin-bottom: 30px; font-weight: bold; text-align: center;">
@@ -171,46 +268,102 @@ if (isset($_GET['edit'])) {
 
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-bottom: 30px;">
             
-            <section style="background: #1a1c24; padding: 30px; border-radius: 8px; border: 1px solid #2a2c35; height: fit-content;">
-                <h2 style="margin-top: 0; color: #fff;"><?php echo $jeu_a_modifier ? "Modifier l'annonce" : "Ajouter un Jeu"; ?></h2>
-                <form action="admin.php" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 15px;">
-                    <input type="hidden" name="action" value="<?php echo $jeu_a_modifier ? 'edit_jeu' : 'add_jeu'; ?>">
-                    <?php if($jeu_a_modifier): ?><input type="hidden" name="id_jeu" value="<?php echo $jeu_a_modifier['id_jeu']; ?>"><input type="hidden" name="old_image" value="<?php echo $jeu_a_modifier['image']; ?>"><?php endif; ?>
-
-                    <div style="display: flex; gap: 15px;">
-                        <div style="flex: 2;"><label style="color:#b3b3b3;">Titre</label><input type="text" name="titre" value="<?php echo $jeu_a_modifier['titre'] ?? ''; ?>" required style="width:100%; padding:10px; background:#0f1014; border:1px solid #333; color:white; border-radius:4px;"></div>
-                        <div style="flex: 1;"><label style="color:#b3b3b3;">Prix (€)</label><input type="number" step="0.01" name="prix" value="<?php echo $jeu_a_modifier['prix'] ?? ''; ?>" required style="width:100%; padding:10px; background:#0f1014; border:1px solid #333; color:white; border-radius:4px;"></div>
-                        <div style="flex: 1;"><label style="color:#ff4757;">Prix Soldé (€)</label><input type="number" step="0.01" name="prix_solde" value="<?php echo ($jeu_a_modifier && $jeu_a_modifier['prix_solde'] > 0) ? $jeu_a_modifier['prix_solde'] : ''; ?>" placeholder="Vide si pas de solde" style="width:100%; padding:10px; background:#0f1014; border:1px solid #333; color:white; border-radius:4px;"></div>
-                    </div>
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+                
+                <?php if(!$jeu_a_modifier): ?>
+                <section style="background: #1a1c24; padding: 25px; border-radius: 8px; border: 1px solid #3498db; box-shadow: 0 0 15px rgba(52, 152, 219, 0.2);">
+                    <h2 style="margin-top: 0; color: #3498db;">🪄 Importation Magique via Steam</h2>
+                    <p style="color: #b3b3b3; font-size: 14px; margin-bottom: 15px;">Entrez l'ID Steam d'un jeu, choisissez sa catégorie et ses plateformes. Le site s'occupe du reste !</p>
                     
-                    <div style="display: flex; gap: 15px;">
-                        <div style="flex: 1;">
-                            <label style="color:#b3b3b3;">Catégorie</label>
-                            <select name="id_cat" style="width:100%; padding:10px; background:#0f1014; border:1px solid #333; color:white; border-radius:4px;">
-                                <?php foreach($categories as $cat): ?><option value="<?php echo $cat['id_cat']; ?>" <?php if($jeu_a_modifier && $jeu_a_modifier['id_cat'] == $cat['id_cat']) echo 'selected'; ?>><?php echo $cat['nom_cat']; ?></option><?php endforeach; ?>
-                            </select>
+                    <form action="admin.php" method="POST" style="display: flex; flex-direction: column; gap: 15px;">
+                        <input type="hidden" name="action" value="import_steam">
+                        
+                        <div style="display: flex; gap: 15px;">
+                            <div style="flex: 1;">
+                                <label style="color:#b3b3b3; font-size: 14px;">ID Steam du jeu (ex: 271590)</label>
+                                <input type="number" name="import_id_steam" required style="width:100%; padding:10px; background:#0f1014; border:1px solid #333; color:white; border-radius:4px; margin-top: 5px;">
+                            </div>
+                            
+                            
                         </div>
-                        <div style="flex: 2;"><label style="color:#b3b3b3;">Image de couverture</label><input type="file" name="image" style="width:100%; padding:8px; background:#0f1014; border:1px solid #333; border-radius:4px;"></div>
-                    </div>
 
-                    <div>
-                        <label style="color:#b3b3b3;">Plateformes disponibles :</label>
-                        <div style="background: #0f1014; border: 1px solid #333; padding: 15px; border-radius: 4px; display: flex; flex-wrap: wrap; gap: 20px; margin-top: 5px;">
-                            <?php foreach($plateformes as $p): ?>
-                                <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
-                                    <input type="checkbox" name="plateformes[]" value="<?php echo $p['id_plateforme']; ?>" <?php if(in_array($p['id_plateforme'], $jeu_plateformes)) echo 'checked'; ?>> 
-                                    <?php echo $p['nom_plateforme']; ?>
-                                </label>
-                            <?php endforeach; ?>
+                        <div>
+                            <label style="color:#b3b3b3; font-size: 14px;">Plateformes disponibles :</label>
+                            <div style="background: #0f1014; border: 1px solid #333; padding: 15px; border-radius: 4px; display: flex; flex-wrap: wrap; gap: 20px; margin-top: 5px;">
+                                <?php foreach($plateformes as $p): ?>
+                                    <label style="cursor: pointer; display: flex; align-items: center; gap: 5px; color: white;">
+                                        <input type="checkbox" name="import_plateformes[]" value="<?php echo $p['id_plateforme']; ?>"> 
+                                        <?php echo $p['nom_plateforme']; ?>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
-                    </div>
+                        
+                        <button type="submit" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; align-self: flex-start;">
+                            🚀 IMPORTER LE JEU
+                        </button>
+                    </form>
+                </section>
+                <?php endif; ?>
 
-                    <div><label style="color:#b3b3b3;">Description</label><textarea name="description" required style="width:100%; height:80px; padding:10px; background:#0f1014; border:1px solid #333; color:white; border-radius:4px;"><?php echo $jeu_a_modifier['description'] ?? ''; ?></textarea></div>
-                    
-                    <button type="submit" class="btn-hero" style="width:100%; padding:15px; font-size:18px; border:none; border-radius:4px; cursor:pointer;">VALIDER L'ANNONCE</button>
-                    <?php if($jeu_a_modifier) echo "<a href='admin.php' style='text-align:center; color:#ccc; text-decoration:none;'>Annuler la modification</a>"; ?>
-                </form>
-            </section>
+                <section style="background: #1a1c24; padding: 30px; border-radius: 8px; border: 1px solid #2a2c35; height: fit-content;">
+                    <h2 style="margin-top: 0; color: #fff;"><?php echo $jeu_a_modifier ? "Modifier l'annonce" : "Ajouter un Jeu Manuellement"; ?></h2>
+                    <form action="admin.php" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 15px;">
+                        <input type="hidden" name="action" value="<?php echo $jeu_a_modifier ? 'edit_jeu' : 'add_jeu'; ?>">
+                        <?php if($jeu_a_modifier): ?><input type="hidden" name="id_jeu" value="<?php echo $jeu_a_modifier['id_jeu']; ?>"><input type="hidden" name="old_image" value="<?php echo $jeu_a_modifier['image']; ?>"><?php endif; ?>
+
+                        <div style="display: flex; gap: 15px;">
+                            <div style="flex: 2;"><label style="color:#b3b3b3;">Titre</label><input type="text" name="titre" value="<?php echo $jeu_a_modifier['titre'] ?? ''; ?>" required style="width:100%; padding:10px; background:#0f1014; border:1px solid #333; color:white; border-radius:4px;"></div>
+                            <div style="flex: 1;"><label style="color:#b3b3b3;">Prix (€)</label><input type="number" step="0.01" name="prix" value="<?php echo $jeu_a_modifier['prix'] ?? ''; ?>" required style="width:100%; padding:10px; background:#0f1014; border:1px solid #333; color:white; border-radius:4px;"></div>
+                            <div style="flex: 1;"><label style="color:#ff4757;">Prix Soldé (€)</label><input type="number" step="0.01" name="prix_solde" value="<?php echo ($jeu_a_modifier && $jeu_a_modifier['prix_solde'] > 0) ? $jeu_a_modifier['prix_solde'] : ''; ?>" placeholder="Vide si pas de solde" style="width:100%; padding:10px; background:#0f1014; border:1px solid #333; color:white; border-radius:4px;"></div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 15px;">
+                            <div style="flex: 1;">
+                                <label style="color:#b3b3b3;">Catégorie</label>
+                                <select name="id_cat" style="width:100%; padding:10px; background:#0f1014; border:1px solid #333; color:white; border-radius:4px;">
+                                    <?php foreach($categories as $cat): ?><option value="<?php echo $cat['id_cat']; ?>" <?php if($jeu_a_modifier && $jeu_a_modifier['id_cat'] == $cat['id_cat']) echo 'selected'; ?>><?php echo $cat['nom_cat']; ?></option><?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div style="flex: 2;"><label style="color:#b3b3b3;">Image de couverture</label><input type="file" name="image" style="width:100%; padding:8px; background:#0f1014; border:1px solid #333; border-radius:4px;"></div>
+                        </div>
+
+                        <div>
+                            <label style="color:#b3b3b3;">Plateformes disponibles :</label>
+                            <div style="background: #0f1014; border: 1px solid #333; padding: 15px; border-radius: 4px; display: flex; flex-wrap: wrap; gap: 20px; margin-top: 5px;">
+                                <?php foreach($plateformes as $p): ?>
+                                    <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                                        <input type="checkbox" name="plateformes[]" value="<?php echo $p['id_plateforme']; ?>" <?php if(in_array($p['id_plateforme'], $jeu_plateformes)) echo 'checked'; ?>> 
+                                        <?php echo $p['nom_plateforme']; ?>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 15px;">
+                            <div style="flex: 1;">
+                                <label style="color:#b3b3b3;">ID Steam</label>
+                                <input type="number" name="id_steam" placeholder="Ex: 271590" value="<?php echo $jeu_a_modifier['id_steam'] ?? ''; ?>" style="width:100%; padding:10px; background:#0f1014; border:1px solid #333; color:white; border-radius:4px;">
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="color:#b3b3b3;">Date de Sortie (Optionnel)</label>
+                                <?php 
+                                    $date_val = '';
+                                    if(!empty($jeu_a_modifier['date_sortie'])) {
+                                        $date_val = date('Y-m-d\TH:i', strtotime($jeu_a_modifier['date_sortie']));
+                                    }
+                                ?>
+                                <input type="datetime-local" name="date_sortie" value="<?php echo $date_val; ?>" style="width:100%; padding:10px; background:#0f1014; border:1px solid #333; color:white; border-radius:4px;">
+                            </div>
+                        </div>
+
+                        <div><label style="color:#b3b3b3;">Description</label><textarea name="description" required style="width:100%; height:80px; padding:10px; background:#0f1014; border:1px solid #333; color:white; border-radius:4px;"><?php echo $jeu_a_modifier['description'] ?? ''; ?></textarea></div>
+                        
+                        <button type="submit" class="btn-hero" style="width:100%; padding:15px; font-size:18px; border:none; border-radius:4px; cursor:pointer; background: #2ecc71; color: white;">VALIDER L'ANNONCE</button>
+                        <?php if($jeu_a_modifier) echo "<a href='admin.php' style='text-align:center; color:#ccc; text-decoration:none;'>Annuler la modification</a>"; ?>
+                    </form>
+                </section>
+            </div>
 
             <div style="display: flex; flex-direction: column; gap: 30px;">
                 
@@ -383,4 +536,4 @@ if (isset($_GET['edit'])) {
 
     </div>
 </body>
-</html>
+</html> 
