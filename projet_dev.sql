@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : 127.0.0.1
--- Généré le : mer. 08 avr. 2026 à 16:47
+-- Généré le : ven. 17 avr. 2026 à 10:35
 -- Version du serveur : 10.4.32-MariaDB
 -- Version de PHP : 8.2.12
 
@@ -24,6 +24,29 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Structure de la table `avis`
+--
+
+CREATE TABLE `avis` (
+  `id_avis` int(11) NOT NULL,
+  `id_jeu` int(11) NOT NULL,
+  `id_user` int(11) NOT NULL,
+  `note` int(11) NOT NULL,
+  `commentaire` text NOT NULL,
+  `date_avis` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `avis`
+--
+
+INSERT INTO `avis` (`id_avis`, `id_jeu`, `id_user`, `note`, `commentaire`, `date_avis`) VALUES
+(1, 2, 7, 1, 'Nullllllll', '2026-04-15 14:30:07'),
+(2, 5, 7, 5, 'Incroyable', '2026-04-15 15:20:41');
+
+-- --------------------------------------------------------
+
+--
 -- Structure de la table `bibliotheque`
 --
 
@@ -33,13 +56,6 @@ CREATE TABLE `bibliotheque` (
   `cle_cd` varchar(20) NOT NULL,
   `date_activation` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Déchargement des données de la table `bibliotheque`
---
-
-INSERT INTO `bibliotheque` (`id_user`, `id_jeu`, `cle_cd`, `date_activation`) VALUES
-(1, 3, '9ED4-8AA9-CB8C', '2026-04-08 14:08:19');
 
 -- --------------------------------------------------------
 
@@ -62,7 +78,8 @@ INSERT INTO `categorie` (`id_cat`, `nom_cat`, `description`) VALUES
 (2, 'Sport', 'Jeux de sport'),
 (3, 'Histoire', 'Jeux historiques'),
 (4, 'Aventure', 'Jeux d\'exploration'),
-(5, 'Sandbox', NULL);
+(5, 'Sandbox', NULL),
+(6, 'Action', NULL);
 
 -- --------------------------------------------------------
 
@@ -108,7 +125,30 @@ INSERT INTO `commande` (`id_commande`, `date_achat`, `prix_total`, `id_user`) VA
 (1, '2026-04-08 13:52:30', 29.99, 1),
 (2, '2026-04-08 13:54:31', 29.99, 1),
 (3, '2026-04-08 14:08:12', 29.99, 1),
-(4, '2026-04-08 14:34:23', 76.98, 1);
+(4, '2026-04-08 14:34:23', 76.98, 1),
+(5, NULL, 34.99, 6),
+(6, NULL, 34.99, 6),
+(7, NULL, 34.99, 6),
+(8, NULL, 34.99, 6),
+(9, NULL, 34.99, 6),
+(10, NULL, 34.99, 6),
+(11, NULL, 34.99, 6),
+(12, NULL, 34.99, 6),
+(13, NULL, 34.99, 6),
+(14, NULL, 34.99, 6),
+(15, NULL, 34.99, 6),
+(16, '2026-04-12 19:20:27', 34.99, 6),
+(17, NULL, 20.00, 6),
+(18, '2026-04-12 19:29:20', 20.00, 6),
+(19, NULL, 29.99, 6),
+(20, '2026-04-12 19:29:55', 29.99, 6),
+(21, NULL, 41.99, 6),
+(22, '2026-04-12 19:30:13', 41.99, 6),
+(23, '2026-04-13 16:13:29', 64.98, 6),
+(24, '2026-04-13 16:58:31', 148.96, 6),
+(25, '2026-04-13 17:00:36', 148.96, 6),
+(26, '2026-04-13 17:04:23', 29.99, 6),
+(27, '2026-04-13 17:05:28', 41.99, 6);
 
 -- --------------------------------------------------------
 
@@ -129,10 +169,88 @@ CREATE TABLE `contenir` (
 
 INSERT INTO `contenir` (`id_jeu`, `id_commande`, `prix_achat`, `cle_cd`) VALUES
 (1, 4, 41.99, '3AB7-F05D-5033'),
+(1, 22, 41.99, 'A6CE-6BF4-718D'),
+(1, 24, 41.99, '32E7-A024-8231'),
+(1, 25, 41.99, 'BC36-3135-D6AD'),
+(1, 27, 41.99, '3D36-7124-88CE'),
 (2, 4, 34.99, '7701-6E6B-CE64'),
+(2, 16, 34.99, 'E455-CC89-5086'),
+(2, 23, 34.99, 'AB66-A19B-E7CF'),
 (3, 1, 29.99, '693E-2F9E-D1E0'),
 (3, 2, 29.99, 'DF8E-A360-C020'),
-(3, 3, 29.99, '9ED4-8AA9-CB8C');
+(3, 3, 29.99, '9ED4-8AA9-CB8C'),
+(3, 20, 29.99, '31E6-EE8E-7375'),
+(3, 23, 29.99, 'C9A8-ABEB-0F1A'),
+(3, 26, 29.99, '0452-8D46-0C46'),
+(4, 18, 20.00, '7898-3E38-04E9');
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `historique_ventes`
+--
+
+CREATE TABLE `historique_ventes` (
+  `id_vente` int(11) NOT NULL,
+  `id_jeu` int(11) NOT NULL,
+  `prix_paye` decimal(10,2) NOT NULL,
+  `date_vente` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `historique_ventes`
+--
+
+INSERT INTO `historique_ventes` (`id_vente`, `id_jeu`, `prix_paye`, `date_vente`) VALUES
+(1, 1, 41.99, '2026-04-06 10:32:24'),
+(2, 2, 34.99, '2026-04-08 10:32:24'),
+(3, 2, 34.99, '2026-03-20 10:32:24'),
+(4, 3, 29.99, '2026-03-20 10:32:24'),
+(5, 3, 29.99, '2026-04-08 10:32:24'),
+(6, 3, 29.99, '2026-04-03 10:32:24'),
+(7, 3, 29.99, '2026-04-11 10:32:24'),
+(8, 4, 20.00, '2026-03-28 10:32:24'),
+(9, 4, 20.00, '2026-04-06 10:32:24'),
+(10, 4, 20.00, '2026-04-05 10:32:24'),
+(11, 4, 20.00, '2026-04-12 10:32:24'),
+(12, 4, 20.00, '2026-04-11 10:32:24'),
+(13, 4, 20.00, '2026-04-02 10:32:24'),
+(14, 5, 69.99, '2026-04-05 10:32:24'),
+(15, 5, 69.99, '2026-04-16 10:32:24'),
+(16, 5, 69.99, '2026-03-24 10:32:24'),
+(17, 5, 69.99, '2026-04-02 10:32:24'),
+(18, 5, 69.99, '2026-03-22 10:32:24'),
+(19, 5, 69.99, '2026-04-13 10:32:24'),
+(20, 5, 69.99, '2026-04-07 10:32:24'),
+(21, 5, 69.99, '2026-04-14 10:32:24'),
+(22, 5, 69.99, '2026-03-20 10:32:24'),
+(23, 5, 69.99, '2026-03-30 10:32:24'),
+(24, 5, 69.99, '2026-04-17 10:32:24'),
+(25, 5, 69.99, '2026-04-13 10:32:24'),
+(26, 5, 69.99, '2026-03-22 10:32:24'),
+(27, 5, 69.99, '2026-04-08 10:32:24'),
+(28, 5, 69.99, '2026-03-25 10:32:24'),
+(29, 5, 69.99, '2026-04-02 10:32:24'),
+(30, 5, 69.99, '2026-03-23 10:32:24'),
+(31, 5, 69.99, '2026-03-25 10:32:24'),
+(32, 5, 69.99, '2026-03-20 10:32:24'),
+(33, 5, 69.99, '2026-03-27 10:32:24'),
+(34, 5, 69.99, '2026-04-13 10:32:24'),
+(35, 5, 69.99, '2026-04-11 10:32:24'),
+(36, 5, 69.99, '2026-04-05 10:32:24'),
+(37, 5, 69.99, '2026-03-23 10:32:24'),
+(38, 5, 69.99, '2026-04-01 10:32:24'),
+(39, 5, 69.99, '2026-04-05 10:32:24'),
+(40, 5, 69.99, '2026-04-13 10:32:24'),
+(41, 5, 69.99, '2026-03-30 10:32:24'),
+(42, 5, 69.99, '2026-04-08 10:32:24'),
+(43, 5, 69.99, '2026-04-07 10:32:24'),
+(44, 5, 69.99, '2026-04-03 10:32:24'),
+(45, 6, 0.00, '2026-03-20 10:32:24'),
+(46, 6, 0.00, '2026-03-21 10:32:24'),
+(47, 6, 0.00, '2026-03-26 10:32:24'),
+(48, 6, 0.00, '2026-04-13 10:32:24'),
+(49, 7, 59.99, '2026-04-03 10:32:24');
 
 -- --------------------------------------------------------
 
@@ -149,18 +267,26 @@ CREATE TABLE `jeu` (
   `note` int(11) DEFAULT NULL,
   `id_cat` int(11) NOT NULL,
   `id_vendeur` int(11) DEFAULT NULL,
-  `prix_solde` decimal(10,2) DEFAULT 0.00
+  `prix_solde` decimal(10,2) DEFAULT 0.00,
+  `date_sortie` datetime DEFAULT NULL,
+  `note_steam` int(11) DEFAULT NULL,
+  `id_steam` int(11) DEFAULT NULL,
+  `ventes` int(11) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `jeu`
 --
 
-INSERT INTO `jeu` (`id_jeu`, `titre`, `description`, `prix`, `image`, `note`, `id_cat`, `id_vendeur`, `prix_solde`) VALUES
-(1, 'Elden Ring', 'Plongez dans l\'Entre-Terre et devenez le Seigneur d\'Elden.', 41.99, 'elden.jpg', 10, 4, NULL, 0.00),
-(2, 'EA Sports FC 24', 'Simulation de football avec plus de 19 000 joueurs.', 34.99, 'fc24.jpg', 8, 2, NULL, 0.00),
-(3, 'Cyberpunk 2077', 'Un jeu de rôle d\'action en monde ouvert dans Night City.', 29.99, 'cyberpunk.jpg', 9, 1, NULL, 0.00),
-(4, 'Minecraft', 'Minecraft est un jeu vidéo de type aventure « bac à sable » développé par le Suédois Markus Persson, alias Notch, puis par la société Mojang Studios.', 20.00, 'minecraft.jpg', NULL, 5, NULL, 0.00);
+INSERT INTO `jeu` (`id_jeu`, `titre`, `description`, `prix`, `image`, `note`, `id_cat`, `id_vendeur`, `prix_solde`, `date_sortie`, `note_steam`, `id_steam`, `ventes`) VALUES
+(1, 'Elden Ring', 'Plongez dans l\'Entre-Terre et devenez le Seigneur d\'Elden.', 41.99, 'elden.jpg', 10, 4, NULL, 0.00, '2022-02-25 14:40:00', 93, 1245620, 1),
+(2, 'EA Sports FC 24', 'Simulation de football avec plus de 19 000 joueurs.', 34.99, 'fc24.jpg', 8, 2, NULL, 0.00, NULL, 46, 3405690, 2),
+(3, 'Cyberpunk 2077', 'Un jeu de rôle d\'action en monde ouvert dans Night City.', 29.99, 'cyberpunk.jpg', 9, 1, NULL, 0.00, '2020-12-10 14:43:45', 86, 1091500, 4),
+(4, 'Minecraft', 'Minecraft est un jeu vidéo de type aventure « bac à sable » développé par le Suédois Markus Persson, alias Notch, puis par la société Mojang Studios.', 20.00, 'minecraft.jpg', NULL, 5, NULL, 0.00, NULL, NULL, NULL, 6),
+(5, 'Crimson Desert', 'Crimson Desert est un jeu d\'action-aventure en monde ouvert sur le continent de Pywel. Accompagnez Kliff pour rebâtir les Crinières Grises et sauver ces terres d\'une menace grandissante. Des étendues sauvages aux ruines et au mystérieux Abysse, forgez votre voie entre combats et découvertes.', 69.99, 'steam_3321460.jpg', NULL, 4, NULL, 0.00, NULL, NULL, 3321460, 31),
+(6, 'Grand Theft Auto V Version originale', 'Grand Theft Auto V sur PC offre aux joueurs la possibilité d\'explorer le monde de Los Santos et Blaine County en haute résolution (jusqu\'à 4K) et à 60 images par seconde.', 0.00, 'steam_271590.jpg', NULL, 6, NULL, 0.00, NULL, NULL, 271590, 4),
+(7, 'PRAGMATA', 'Pragmata est un jeu d\'action-aventure de science-fiction développé par Capcom. Membre d\'une équipe envoyée sur la Lune, Hugh rencontre Diana, une jeune androïde. Ensemble, ils parcourront une station lunaire dirigée par une IA malfaisante, afin de trouver un moyen de retourner sur Terre.', 59.99, 'steam_3357650.jpg', NULL, 6, NULL, 0.00, '2026-04-17 12:00:00', NULL, 3357650, 1),
+(8, 'Little Nightmares VR: Altered Echoes', 'Little Nightmares VR: Altered Echoes est un jeu d\'énigme et d\'aventure dans lequel vous incarnez Dark Six, une mystérieuse silhouette de petite fille. Explorez un monde angoissant, résolvez des énigmes complexes et échappez à de terrifiants géants. Votre quête : redevenir vous-même.', 0.00, 'steam_2482940.jpg', NULL, 6, NULL, 0.00, '2026-04-23 00:00:00', NULL, 2482940, 0);
 
 -- --------------------------------------------------------
 
@@ -192,7 +318,15 @@ INSERT INTO `jeu_plateforme` (`id_jeu`, `id_plateforme`) VALUES
 (4, 1),
 (4, 2),
 (4, 3),
-(4, 4);
+(4, 4),
+(5, 1),
+(5, 2),
+(5, 3),
+(6, 1),
+(6, 2),
+(6, 3),
+(7, 1),
+(8, 1);
 
 -- --------------------------------------------------------
 
@@ -235,9 +369,8 @@ CREATE TABLE `utilisateur` (
 
 INSERT INTO `utilisateur` (`id_user`, `pseudo`, `email`, `password`, `role`) VALUES
 (1, 'Admin1', 'admin@digitalgames.fr', 'admin123', 'admin'),
-(2, 'User1', 'user1@digitalgames.fr', 'user123', 'client'),
-(3, 'Client2', 'client2@digitalgames.fr', 'client123', 'client'),
-(4, 'Client3', 'client3@digitalgames.fr', 'client123', 'tiers');
+(6, 'kylian', 'kylian@test.test', '$2y$10$FjBBOmX7rF5ktLnWCD1.feWdEjy8SCHEySFjnOZGBAdm2F7zprXLe', 'client'),
+(7, 'admin', 'admin1@digitalgames.fr', '$2y$10$VEStpZVS48kWk4d4WqhrcOQ3E9FP4hrPBRHOeKF01XSvj0XdSh.Zu', 'admin');
 
 -- --------------------------------------------------------
 
@@ -256,11 +389,21 @@ CREATE TABLE `wishlist` (
 --
 
 INSERT INTO `wishlist` (`id_user`, `id_jeu`, `date_ajout`) VALUES
-(1, 3, '2026-04-08 15:52:41');
+(1, 3, '2026-04-08 15:52:41'),
+(7, 2, '2026-04-15 15:46:06'),
+(7, 7, '2026-04-17 09:50:24');
 
 --
 -- Index pour les tables déchargées
 --
+
+--
+-- Index pour la table `avis`
+--
+ALTER TABLE `avis`
+  ADD PRIMARY KEY (`id_avis`),
+  ADD KEY `id_jeu` (`id_jeu`),
+  ADD KEY `id_user` (`id_user`);
 
 --
 -- Index pour la table `bibliotheque`
@@ -295,6 +438,13 @@ ALTER TABLE `commande`
 ALTER TABLE `contenir`
   ADD PRIMARY KEY (`id_jeu`,`id_commande`),
   ADD KEY `id_commande` (`id_commande`);
+
+--
+-- Index pour la table `historique_ventes`
+--
+ALTER TABLE `historique_ventes`
+  ADD PRIMARY KEY (`id_vente`),
+  ADD KEY `id_jeu` (`id_jeu`);
 
 --
 -- Index pour la table `jeu`
@@ -335,10 +485,16 @@ ALTER TABLE `wishlist`
 --
 
 --
+-- AUTO_INCREMENT pour la table `avis`
+--
+ALTER TABLE `avis`
+  MODIFY `id_avis` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT pour la table `categorie`
 --
 ALTER TABLE `categorie`
-  MODIFY `id_cat` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_cat` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT pour la table `code_promo`
@@ -350,13 +506,19 @@ ALTER TABLE `code_promo`
 -- AUTO_INCREMENT pour la table `commande`
 --
 ALTER TABLE `commande`
-  MODIFY `id_commande` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_commande` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+
+--
+-- AUTO_INCREMENT pour la table `historique_ventes`
+--
+ALTER TABLE `historique_ventes`
+  MODIFY `id_vente` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- AUTO_INCREMENT pour la table `jeu`
 --
 ALTER TABLE `jeu`
-  MODIFY `id_jeu` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_jeu` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT pour la table `plateforme`
@@ -368,11 +530,18 @@ ALTER TABLE `plateforme`
 -- AUTO_INCREMENT pour la table `utilisateur`
 --
 ALTER TABLE `utilisateur`
-  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- Contraintes pour les tables déchargées
 --
+
+--
+-- Contraintes pour la table `avis`
+--
+ALTER TABLE `avis`
+  ADD CONSTRAINT `avis_ibfk_1` FOREIGN KEY (`id_jeu`) REFERENCES `jeu` (`id_jeu`) ON DELETE CASCADE,
+  ADD CONSTRAINT `avis_ibfk_2` FOREIGN KEY (`id_user`) REFERENCES `utilisateur` (`id_user`) ON DELETE CASCADE;
 
 --
 -- Contraintes pour la table `bibliotheque`
@@ -393,6 +562,12 @@ ALTER TABLE `commande`
 ALTER TABLE `contenir`
   ADD CONSTRAINT `contenir_ibfk_1` FOREIGN KEY (`id_jeu`) REFERENCES `jeu` (`id_jeu`),
   ADD CONSTRAINT `contenir_ibfk_2` FOREIGN KEY (`id_commande`) REFERENCES `commande` (`id_commande`);
+
+--
+-- Contraintes pour la table `historique_ventes`
+--
+ALTER TABLE `historique_ventes`
+  ADD CONSTRAINT `historique_ventes_ibfk_1` FOREIGN KEY (`id_jeu`) REFERENCES `jeu` (`id_jeu`) ON DELETE CASCADE;
 
 --
 -- Contraintes pour la table `jeu`
