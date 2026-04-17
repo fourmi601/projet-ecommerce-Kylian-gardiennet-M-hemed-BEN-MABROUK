@@ -10,7 +10,14 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 $id_jeu = (int)$_GET['id'];
 
 // On récupère le jeu
-$stmt = $pdo->prepare("SELECT j.*, c.nom_cat FROM jeu j LEFT JOIN categorie c ON j.id_cat = c.id_cat WHERE j.id_jeu = ?");
+// On récupère le jeu ET les infos du vendeur s'il y en a un
+$stmt = $pdo->prepare("
+    SELECT j.*, c.nom_cat, u.pseudo AS nom_vendeur 
+    FROM jeu j 
+    LEFT JOIN categorie c ON j.id_cat = c.id_cat 
+    LEFT JOIN utilisateur u ON j.id_vendeur = u.id_user
+    WHERE j.id_jeu = ?
+");
 $stmt->execute([$id_jeu]);
 $jeu = $stmt->fetch();
 
@@ -30,20 +37,10 @@ if (isset($_SESSION['user_id'])) {
 }
 
 // LOGIQUE DE PRÉCOMMANDE
-// 1. Logique de Précommande
 $est_precommande = false;
-$date_actuelle = new DateTime();
-if (!empty($jeu['date_sortie'])) {
-    $date_jeu = new DateTime($jeu['date_sortie']);
-    if ($date_jeu > $date_actuelle) { $est_precommande = true; }
-}
-
-// 2. Gestion de l'affichage de la note Steam
-$note_steam = $jeu['note_steam'];
-if ($note_steam === null || $note_steam == 0) {
-    $steam_html = "<span style='color:#8f98a0;'>Aucun avis pour le moment</span>";
-} else {
-    // ... ton code précédent pour "Très positives" etc ...
+$date_actuelle = date('Y-m-d H:i:s');
+if (!empty($jeu['date_sortie']) && $jeu['date_sortie'] > $date_actuelle) {
+    $est_precommande = true;
 }
 
 // TRADUCTION NOTE STEAM
@@ -115,7 +112,6 @@ if (count($les_avis) > 0) {
         .dg-star-box::before { content: "★★★★★"; }
         .dg-star-fill { position: absolute; top: 0; left: 0; white-space: nowrap; overflow: hidden; color: #f1c40f; }
         .dg-star-fill::before { content: "★★★★★"; }
-        
         .timer-box { display: flex; gap: 10px; margin-top: 15px; }
         .time-block { background: #0b0c10; border-radius: 4px; padding: 10px; text-align: center; min-width: 50px; border: 1px solid #333; }
         .time-value { font-size: 24px; font-weight: bold; color: #f39c12; display: block; }
@@ -140,7 +136,17 @@ if (count($les_avis) > 0) {
                     <div>
                         <span style="color: #3498db; font-weight: bold; text-transform: uppercase;"><?php echo htmlspecialchars($jeu['nom_cat'] ?? 'PC'); ?></span>
                         <h1 style="margin: 10px 0; font-size: 42px;"><?php echo htmlspecialchars($jeu['titre']); ?></h1>
-                        
+                        <div style="margin-bottom: 15px;">
+    <?php if (!empty($jeu['nom_vendeur'])): ?>
+        <span style="background: #f39c12; color: #1a1c24; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase;">
+            🏪 Vendu par : <?php echo htmlspecialchars($jeu['nom_vendeur']); ?>
+        </span>
+    <?php else: ?>
+         <span style="background: #3498db; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase;">
+            ✅ Vendu par Digital Games
+        </span>
+    <?php endif; ?>
+</div>
                         <div style="color: #b3b3b3; font-size: 16px; margin-bottom: 20px;">
                             Date de sortie : 
                             <strong style="color: white;">
@@ -184,7 +190,7 @@ if (count($les_avis) > 0) {
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #333; display: flex; justify-content: space-between; align-items: flex-end;">
                     
                     <div>
-                        <?php if($est_precommande): ?>
+                        <?php if($est_precommande && $jeu['prix'] > 0): ?>
                             <span style="background: #f39c12; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold;">PRÉCOMMANDE</span>
                             <div class="timer-box" data-date="<?php echo $jeu['date_sortie']; ?>">
                                 <div class="time-block"><span class="time-value jours">00</span><span class="time-label">Jours</span></div>
@@ -196,23 +202,39 @@ if (count($les_avis) > 0) {
                     </div>
                     
                     <div style="display: flex; align-items: center; gap: 20px;">
-                        <span style="font-size: 36px; font-weight: bold; color: #2ecc71;">
-                            <?php echo number_format($jeu['prix_solde'] > 0 ? $jeu['prix_solde'] : $jeu['prix'], 2); ?> €
-                        </span>
                         
-                        <div style="display: flex; gap: 10px;">
-                            <?php if(isset($_SESSION['user_id'])): ?>
-                                <?php if($est_en_wishlist): ?>
-                                    <a href="action_wishlist.php?id_jeu=<?php echo $jeu['id_jeu']; ?>" style="background: #2a2c35; border: 1px solid #ff4757; color: #ff4757; padding: 15px; border-radius: 6px; text-decoration: none; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: 0.2s;" title="Retirer de la wishlist">❤️</a>
-                                <?php else: ?>
-                                    <a href="action_wishlist.php?id_jeu=<?php echo $jeu['id_jeu']; ?>" style="background: #2a2c35; border: 1px solid #333; color: white; padding: 15px; border-radius: 6px; text-decoration: none; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: 0.2s;" title="Ajouter à la wishlist">🤍</a>
+                        <?php if ($jeu['prix'] > 0): // SI LE JEU A UN PRIX ?>
+                            <span style="font-size: 36px; font-weight: bold; color: #2ecc71;">
+                                <?php echo number_format($jeu['prix_solde'] > 0 ? $jeu['prix_solde'] : $jeu['prix'], 2); ?> €
+                            </span>
+                            
+                            <div style="display: flex; gap: 10px;">
+                                <?php if(isset($_SESSION['user_id'])): ?>
+                                    <a href="ajouter_wishlist.php?id_jeu=<?php echo $jeu['id_jeu']; ?>" style="background: #2a2c35; border: 1px solid <?php echo $est_en_wishlist ? '#ff4757' : '#333'; ?>; color: <?php echo $est_en_wishlist ? '#ff4757' : 'white'; ?>; padding: 15px; border-radius: 6px; text-decoration: none; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: 0.2s;" title="Wishlist">
+                                        <?php echo $est_en_wishlist ? '❤️' : '🤍'; ?>
+                                    </a>
                                 <?php endif; ?>
-                            <?php endif; ?>
 
-                            <a href="ajouter_panier.php?id_jeu=<?php echo $jeu['id_jeu']; ?>" style="background: <?php echo $est_precommande ? '#f39c12' : '#ff4757'; ?>; color: white; padding: 15px 30px; border-radius: 6px; text-decoration: none; font-size: 20px; font-weight: bold; transition: 0.2s;">
-                                🛒 <?php echo $est_precommande ? 'PRÉCOMMANDER' : 'AJOUTER'; ?>
-                            </a>
-                        </div>
+                                <a href="ajouter_panier.php?id_jeu=<?php echo $jeu['id_jeu']; ?>" style="background: <?php echo $est_precommande ? '#f39c12' : '#ff4757'; ?>; color: white; padding: 15px 30px; border-radius: 6px; text-decoration: none; font-size: 20px; font-weight: bold; transition: 0.2s;">
+                                    🛒 <?php echo $est_precommande ? 'PRÉCOMMANDER' : 'AJOUTER'; ?>
+                                </a>
+                            </div>
+
+                        <?php else: // SI LE JEU EST A 0€ ?>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <?php if(isset($_SESSION['user_id'])): ?>
+                                    <a href="ajouter_wishlist.php?id_jeu=<?php echo $jeu['id_jeu']; ?>" style="background: #2a2c35; border: 1px solid <?php echo $est_en_wishlist ? '#ff4757' : '#333'; ?>; color: <?php echo $est_en_wishlist ? '#ff4757' : 'white'; ?>; padding: 15px; border-radius: 6px; text-decoration: none; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: 0.2s;" title="Wishlist">
+                                        <?php echo $est_en_wishlist ? '❤️' : '🤍'; ?>
+                                    </a>
+                                <?php endif; ?>
+                                
+                                <span style="font-size: 28px; font-weight: bold; color: #f39c12; margin-right: 15px;">⏳ Bientôt disponible</span>
+                                <button disabled style="background: #2a2c35; color: #666; padding: 15px 30px; border-radius: 6px; border: 1px solid #333; font-size: 20px; font-weight: bold; cursor: not-allowed;">
+                                    INDISPONIBLE
+                                </button>
+                            </div>
+                        <?php endif; ?>
+                        
                     </div>
                 </div>
             </div>
@@ -222,7 +244,7 @@ if (count($les_avis) > 0) {
             <div style="flex: 2; min-width: 300px;">
                 <h2 style="font-size: 24px; margin-bottom: 20px; border-left: 5px solid #3498db; padding-left: 15px;">Avis de la communauté (<?php echo count($les_avis); ?>)</h2>
                 <?php if (empty($les_avis)): ?>
-                    <p style="color: #b3b3b3; background: #1a1c24; padding: 20px; border-radius: 8px;">Aucun avis pour le moment.</p>
+                    <p style=\"color: #b3b3b3; background: #1a1c24; padding: 20px; border-radius: 8px;\">Aucun avis pour le moment.</p>
                 <?php else: ?>
                     <?php foreach ($les_avis as $avis): ?>
                         <div style="background: #1a1c24; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #2a2c35;">
@@ -267,7 +289,7 @@ if (count($les_avis) > 0) {
         </div>
     </div>
 
-    <?php if($est_precommande): ?>
+    <?php if($est_precommande && $jeu['prix'] > 0): ?>
     <script>
         function updateTimers() {
             const box = document.querySelector('.timer-box');

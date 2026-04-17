@@ -22,6 +22,7 @@ $jeux = $stmt->fetchAll();
 
 $ma_wishlist = [];
 $nb_promos_wishlist = 0;
+$nb_sorties_recentes = 0; // NOUVEAU
 
 if (isset($_SESSION['user_id'])) {
     $stmtWish = $pdo->prepare("SELECT id_jeu FROM wishlist WHERE id_user = ?");
@@ -30,8 +31,14 @@ if (isset($_SESSION['user_id'])) {
 
     if (!empty($ma_wishlist)) {
         $ids = implode(',', $ma_wishlist);
+        
+        // Requête pour les promos
         $stmtSolde = $pdo->query("SELECT COUNT(*) FROM jeu WHERE id_jeu IN ($ids) AND prix_solde > 0");
         $nb_promos_wishlist = $stmtSolde->fetchColumn(); 
+
+        // Requête pour les sorties récentes (moins de 7 jours)
+        $stmtSortie = $pdo->query("SELECT COUNT(*) FROM jeu WHERE id_jeu IN ($ids) AND date_sortie <= NOW() AND date_sortie > DATE_SUB(NOW(), INTERVAL 7 DAY)");
+        $nb_sorties_recentes = $stmtSortie->fetchColumn(); 
     }
 }
 ?>
@@ -89,20 +96,19 @@ if (isset($_SESSION['user_id'])) {
                             <p class="desc"><?php echo substr(htmlspecialchars($jeu['description']), 0, 40) . '...'; ?></p>
                             
                             <div class="price-row" style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-                                
-                                <div>
-                                    <?php if ($jeu['prix_solde'] > 0): ?>
-                                        <span style="text-decoration: line-through; color: #ff4757; font-size: 14px; margin-right: 5px;"><?php echo number_format($jeu['prix'], 2); ?>€</span>
-                                        <span class="price" style="font-size: 20px; font-weight: bold; color: #2ecc71;"><?php echo number_format($jeu['prix_solde'], 2); ?>€</span>
-                                    <?php else: ?>
-                                        <span class="price" style="font-size: 20px; font-weight: bold; color: #2ecc71;"><?php echo number_format($jeu['prix'], 2); ?>€</span>
-                                    <?php endif; ?>
-                                </div>
-                                
-                                <a href="ajouter_panier.php?id_jeu=<?php echo $jeu['id_jeu']; ?>" class="btn-add" style="background: #ff4757; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none; font-weight: bold; transition: 0.3s;">
-                                    Ajouter
-                                </a>
-                            </div>
+    <div>
+        <?php if ($jeu['prix_solde'] > 0): ?>
+            <span style="text-decoration: line-through; color: #ff4757; font-size: 14px; margin-right: 5px;"><?php echo number_format($jeu['prix'], 2); ?>€</span>
+            <span class="price" style="font-size: 20px; font-weight: bold; color: #2ecc71;"><?php echo number_format($jeu['prix_solde'], 2); ?>€</span>
+        <?php else: ?>
+            <span class="price" style="font-size: 20px; font-weight: bold; color: #2ecc71;"><?php echo number_format($jeu['prix'], 2); ?>€</span>
+        <?php endif; ?>
+    </div>
+    
+    <a href="ajouter_panier.php?id_jeu=<?php echo $jeu['id_jeu']; ?>" class="btn-add" style="background: #ff4757; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none; font-weight: bold; transition: 0.3s;">
+        Ajouter
+    </a>
+</div>
                         </div>
                         
                     </div>
@@ -175,6 +181,21 @@ if (isset($_SESSION['user_id'])) {
                 toast.addEventListener('mouseleave', Swal.resumeTimer)
             }
         });
+        <?php if ($nb_sorties_recentes > 0): ?>
+    <script>
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Nouveauté Wishlist !',
+            text: '<?php echo $nb_sorties_recentes; ?> jeu(x) de votre liste vient de sortir !',
+            showConfirmButton: false,
+            timer: 8000,
+            background: '#1a1c24',
+            color: '#fff'
+        });
+    </script>
+    <?php endif; ?>
 
         Toast.fire({
             icon: 'info',

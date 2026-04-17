@@ -126,7 +126,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <h2 style="margin: 0;">Historique des Commandes</h2>
                     <p style="color: #b3b3b3; margin-top: 5px;">Consultez vos factures et anciens achats.</p>
                 </a>
-
+<?php if ($_SESSION['role'] === 'tiers' || $_SESSION['role'] === 'admin'): ?>
+                <a href="admin_stats.php" style="background: linear-gradient(135deg, #1a1c24, #9b59b630); border: 1px solid #9b59b6; padding: 30px; border-radius: 8px; text-decoration: none; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                    <span style="font-size: 40px; margin-bottom: 10px;">📊</span>
+                    <h2 style="margin: 0;">Monitoring & Stats</h2>
+                    <p style="color: #b3b3b3; margin-top: 5px;">Voir les ventes réelles et le CA.</p>
+                </a>
+                <?php endif; ?>
 <?php if ($_SESSION['role'] === 'tiers'): ?>
                 <a href="vendeur.php" style="background: linear-gradient(135deg, #1a1c24, #f39c1230); border: 1px solid #f39c12; padding: 30px; border-radius: 8px; text-decoration: none; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                     <span style="font-size: 40px; margin-bottom: 10px;">🏪</span>
