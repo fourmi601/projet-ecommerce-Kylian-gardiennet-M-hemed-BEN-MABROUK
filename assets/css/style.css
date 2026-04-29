@@ -660,172 +660,179 @@ nav::before {
     color: #606375;
 }
 
-/*   MODE CLAIR */
+/* ===================== MODE CLAIR ===================== */
+
+html.light-theme { background-color: #f0f2f5; }
 
 body.light-theme {
-    background-color: #f0f2f5;
-    background-image: none;
-    color: #1a1a2e;
+    background-color: #f0f2f5 !important;
+    background-image: none !important;
+    color: #2c3348 !important;
+    /* Override CSS variables pour tous les composants */
+    --bg-dark:   #f0f2f5;
+    --bg-panel:  #ffffff;
+    --bg-card:   #ffffff;
+    --text-white: #2c3348;
+    --text-grey:  #6b7280;
+    --border-color: #e1e5ec;
 }
 
+/* ---- Navbar dg (navbar.php) ---- */
+body.light-theme .dg-nav-container {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e1e5ec !important;
+}
+body.light-theme .dg-search-bar {
+    background: #f0f2f5 !important;
+    border-color: #d0d5e0 !important;
+}
+body.light-theme .dg-search-bar input {
+    color: #2c3348 !important;
+    background: transparent !important;
+}
+body.light-theme .dg-search-results {
+    background: #ffffff !important;
+    border-color: #e1e5ec !important;
+}
+body.light-theme .dg-search-results a { color: #2c3348 !important; background: #fafafa !important; }
+body.light-theme .dg-search-results a:hover { background: #f0f2f5 !important; }
+
+/* ---- Navbar CSS classique ---- */
 body.light-theme nav {
-    background-color: rgba(255, 255, 255, 0.97);
-    border-bottom: 1px solid #dde1ea;
+    background-color: rgba(255, 255, 255, 0.97) !important;
+    border-bottom: 1px solid #e1e5ec !important;
 }
+body.light-theme nav::before { background: linear-gradient(90deg, var(--primary-blue), var(--primary-red)); }
+body.light-theme .search-box { background: #f0f2f5; border-color: #d0d5e0; }
+body.light-theme .search-box input { color: #2c3348; }
+body.light-theme .nav-links a { color: #4b5563; }
+body.light-theme .nav-links a:hover { color: #2c3348; background-color: rgba(0,0,0,0.04); }
+body.light-theme .nav-links a.active { color: #2c3348; }
+body.light-theme .nav-theme-btn { color: #4b5563; border-color: #d0d5e0; }
+body.light-theme .nav-theme-btn:hover { color: #2c3348; border-color: #9ca3af; }
+body.light-theme .user-actions a { color: #2c3348 !important; }
+body.light-theme .user-actions a:hover { color: #ff4757 !important; }
 
-body.light-theme nav::before {
-    background: linear-gradient(90deg, var(--primary-blue), var(--primary-red));
-}
-
-body.light-theme .search-box {
-    background: #f0f2f5;
-    border-color: #dde1ea;
-}
-
-body.light-theme .search-box input {
-    color: #1a1a2e;
-}
-
-body.light-theme .nav-links a {
-    color: #555;
-}
-
-body.light-theme .nav-links a:hover {
-    color: #1a1a2e;
-    background-color: rgba(0,0,0,0.05);
-}
-
-body.light-theme .nav-links a.active {
-    color: #1a1a2e;
-}
-
-body.light-theme .nav-theme-btn {
-    color: #555;
-    border-color: #dde1ea;
-}
-
-body.light-theme .nav-theme-btn:hover {
-    color: #1a1a2e;
-    border-color: #aaa;
-}
-
+/* ---- Hero ---- */
 body.light-theme .hero {
-    background: linear-gradient(to right, #f0f2f5 30%, rgba(240,242,245,0.7) 70%, rgba(240,242,245,0.1) 100%),
+    background: linear-gradient(to right, #e8eaf0 30%, rgba(232,234,240,0.6) 70%, rgba(232,234,240,0.1) 100%),
                 url('../img/banner.jpg') center/cover no-repeat;
 }
+body.light-theme .hero h1 { color: #2c3348; text-shadow: none; }
+body.light-theme .hero p { color: #6b7280; }
 
-body.light-theme .hero h1 {
-    color: #1a1a2e;
-    text-shadow: none;
-}
+/* ---- Cartes ---- */
+body.light-theme .game-card { background-color: #ffffff; border-color: #e1e5ec; box-shadow: 0 2px 12px rgba(44,51,72,0.07); }
+body.light-theme .game-card:hover { border-color: var(--primary-blue); box-shadow: 0 6px 20px rgba(0,85,204,0.14); }
+body.light-theme .card-image::after { background: linear-gradient(to top, #ffffff, transparent); }
+body.light-theme .card-info h3 { color: #2c3348; }
+body.light-theme .desc { color: #6b7280; }
+body.light-theme .price { color: var(--primary-blue); }
+body.light-theme .section-title { color: #2c3348; }
 
-body.light-theme .hero p {
-    color: #555;
-}
-
-body.light-theme .game-card {
-    background-color: #ffffff;
-    border-color: #dde1ea;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-}
-
-body.light-theme .game-card:hover {
-    border-color: var(--primary-blue);
-    box-shadow: 0 6px 20px rgba(0, 85, 204, 0.15);
-}
-
-body.light-theme .card-image::after {
-    background: linear-gradient(to top, #ffffff, transparent);
-}
-
-body.light-theme .card-info h3 {
-    color: #1a1a2e;
-}
-
-body.light-theme .desc {
-    color: #777;
-}
-
-body.light-theme .price {
-    color: var(--primary-blue);
-}
-
+/* ---- Panier ---- */
 body.light-theme .cart-item,
-body.light-theme .cart-summary {
-    background-color: #ffffff;
-    border-color: #dde1ea;
+body.light-theme .cart-summary { background-color: #ffffff; border-color: #e1e5ec; }
+body.light-theme .item-price { color: var(--primary-blue); }
+body.light-theme .qty-box { background: #f0f2f5; border-color: #e1e5ec; }
+body.light-theme .qty-box button { color: #6b7280; }
+body.light-theme .qty-box button:hover { color: #2c3348; }
+body.light-theme .cart-summary h3 { color: #2c3348; }
+
+/* ---- Footer ---- */
+body.light-theme .site-footer { background-color: #ffffff; border-top: 1px solid #e1e5ec; color: #6b7280; }
+body.light-theme .footer-col h3 { color: #2c3348; }
+body.light-theme .footer-col ul li a { color: #6b7280; }
+body.light-theme .footer-col ul li a:hover { color: #2c3348; }
+body.light-theme .payment-icons span { background: #f0f2f5; border-color: #e1e5ec; color: #6b7280; }
+body.light-theme .footer-bottom { border-top-color: #e1e5ec; color: #9ca3af; }
+
+/* ---- Formulaires ---- */
+body.light-theme input:not([type="submit"]):not([type="button"]):not([type="file"]):not([type="checkbox"]):not([type="radio"]) {
+    background: #ffffff !important; color: #2c3348 !important; border: 1px solid #d0d5e0 !important;
+}
+body.light-theme select   { background: #ffffff !important; color: #2c3348 !important; border: 1px solid #d0d5e0 !important; }
+body.light-theme textarea { background: #ffffff !important; color: #2c3348 !important; border: 1px solid #d0d5e0 !important; }
+body.light-theme label    { color: #4b5563 !important; }
+
+/* ---- Panneaux sombres (inline backgrounds) → fond blanc ---- */
+body.light-theme [style*="background: #1a1c24"],
+body.light-theme [style*="background:#1a1c24"],
+body.light-theme [style*="background: #13151e"],
+body.light-theme [style*="background: #0f1014"],
+body.light-theme [style*="background: #2a2c35"],
+body.light-theme [style*="background: #0b0c10"],
+body.light-theme [style*="background:#0b0c10"] {
+    background: #ffffff !important;
+    border-color: #e1e5ec !important;
 }
 
-body.light-theme .item-price {
-    color: var(--primary-blue);
-}
+/* ---- Textes clairs devenus illisibles sur fond blanc ---- */
+/*  On cible les couleurs inline les plus fréquentes               */
+body.light-theme [style*="color: white"]   { color: #2c3348 !important; }
+body.light-theme [style*="color:white"]    { color: #2c3348 !important; }
+body.light-theme [style*="color: #fff"]    { color: #2c3348 !important; }
+body.light-theme [style*="color:#fff"]     { color: #2c3348 !important; }
+body.light-theme [style*="color: #b3b3b3"]{ color: #6b7280 !important; }
+body.light-theme [style*="color:#b3b3b3"] { color: #6b7280 !important; }
+body.light-theme [style*="color: #9aa0b4"]{ color: #6b7280 !important; }
+body.light-theme [style*="color: #666"]   { color: #4b5563 !important; }
+body.light-theme [style*="border: 1px solid #333"]   { border-color: #e1e5ec !important; }
+body.light-theme [style*="border:1px solid #333"]    { border-color: #e1e5ec !important; }
+body.light-theme [style*="border: 1px solid #2a2c35"]{ border-color: #e1e5ec !important; }
+body.light-theme [style*="border: 1px solid #252836"]{ border-color: #e1e5ec !important; }
 
-body.light-theme .qty-box {
-    background: #f0f2f5;
-    border-color: #dde1ea;
-}
+/* Exception : boutons avec fond coloré — le texte DOIT rester blanc */
+body.light-theme [style*="background: #ff4757"] { color: #ffffff !important; }
+body.light-theme [style*="background: #2ecc71"] { color: #ffffff !important; }
+body.light-theme [style*="background: #3498db"] { color: #ffffff !important; }
+body.light-theme [style*="background: #0055cc"] { color: #ffffff !important; }
+body.light-theme [style*="background: #f39c12"] { color: #1a1c24 !important; }
+body.light-theme [style*="background: #e74c3c"] { color: #ffffff !important; }
+body.light-theme [style*="background: #9b59b6"] { color: #ffffff !important; }
+body.light-theme [style*="background: #00439C"] { color: #ffffff !important; }
+body.light-theme [style*="background: #0056b3"] { color: #ffffff !important; }
+body.light-theme .btn-hero                      { color: #ffffff !important; }
+body.light-theme .btn-add                       { color: #ffffff !important; }
+body.light-theme .dg-cart-btn                   { color: #ffffff !important; }
+body.light-theme .badge-preorder,
+body.light-theme .badge-soon                    { color: #ffffff !important; }
 
-body.light-theme .qty-box button {
-    color: #555;
+/* ---- Hero en mode clair : un peu plus chaud, plus contrasté ---- */
+body.light-theme .hero {
+    background:
+        linear-gradient(to right, #eceef4 25%, rgba(236,238,244,0.75) 60%, rgba(236,238,244,0.15) 100%),
+        url('../img/banner.jpg') center/cover no-repeat;
 }
+body.light-theme .hero h1      { color: #1a1e2e; text-shadow: none; }
+body.light-theme .hero p       { color: #4b5563; }
+body.light-theme .highlight    { color: var(--primary-blue); }
+body.light-theme .btn-hero     { color: #ffffff; }
 
-body.light-theme .qty-box button:hover {
-    color: #1a1a2e;
+/* ---- Sections / titres inline ---- */
+body.light-theme h1[style], body.light-theme h2[style], body.light-theme h3[style] {
+    color: #2c3348 !important;
 }
+/* Exception : titres avec couleur voulue (vert succès, rouge erreur…) */
+body.light-theme h1[style*="color: #2ecc71"] { color: #16a34a !important; }
+body.light-theme h1[style*="color: #ff4757"] { color: #dc2626 !important; }
+body.light-theme h2[style*="color: #ff4757"] { color: #dc2626 !important; }
+body.light-theme h2[style*="color: #3498db"] { color: #0055cc !important; }
+body.light-theme h2[style*="color: #9b59b6"] { color: #7c3aed !important; }
 
-body.light-theme .cart-summary h3 {
-    color: #1a1a2e;
-}
-
-body.light-theme .section-title {
-    color: #1a1a2e;
-}
-
-body.light-theme .site-footer {
-    background-color: #ffffff;
-    border-top: 1px solid #dde1ea;
-    color: #777;
-}
-
-body.light-theme .footer-col h3 {
-    color: #1a1a2e;
-}
-
-body.light-theme .footer-col ul li a {
-    color: #777;
-}
-
-body.light-theme .footer-col ul li a:hover {
-    color: #1a1a2e;
-}
-
-body.light-theme .payment-icons span {
-    background: #f0f2f5;
-    border-color: #dde1ea;
-    color: #555;
-}
-
-body.light-theme .footer-bottom {
-    border-top-color: #dde1ea;
-    color: #aaa;
-}
-
-/* Mode clair - contact */
-body.light-theme .contact-wrapper {
-    background-color: #ffffff !important;
-    border-color: #dde1ea !important;
-}
-
+/* ---- Contact ---- */
+body.light-theme .contact-wrapper { background-color: #ffffff !important; border-color: #e1e5ec !important; }
 body.light-theme .contact-wrapper input,
-body.light-theme .contact-wrapper textarea {
-    background-color: #f0f2f5 !important;
-    border-color: #dde1ea !important;
-    color: #1a1a2e !important;
-}
+body.light-theme .contact-wrapper textarea { background-color: #f0f2f5 !important; border-color: #e1e5ec !important; color: #2c3348 !important; }
+body.light-theme .contact-wrapper label { color: #6b7280 !important; }
 
-body.light-theme .contact-wrapper label {
-    color: #555 !important;
-}
+/* ---- Liens inline ---- */
+body.light-theme a[style*="color: white"]  { color: #0055cc !important; }
+body.light-theme a[style*="color:#b3b3b3"] { color: #4b5563 !important; }
+
+/* ---- Spans / badges texte ---- */
+body.light-theme span[style*="color: #b3b3b3"] { color: #6b7280 !important; }
+body.light-theme span[style*="color: white"]   { color: #2c3348 !important; }
 
 /* tel*/
 
@@ -929,14 +936,8 @@ body.light-theme .contact-wrapper label {
     }
 }
 
-body.light-theme .game-buy-box {
-    background: #f9f9f9 !important;
-    border-color: #ccc !important;
-}
-body.light-theme .game-description h3 {
-    color: #1a1a1a !important;
-    border-bottom-color: #ccc !important;
-}
+body.light-theme .game-buy-box { background: #f0f2f5 !important; border-color: #e1e5ec !important; }
+body.light-theme .game-description h3 { color: #2c3348 !important; border-bottom-color: #e1e5ec !important; }
 
 /* lien jeu carte */ 
 
@@ -951,76 +952,39 @@ body.light-theme .game-description h3 {
     transform: scale(1.03);
 }
 
-/* clair page jeu */ 
-
-body.light-theme .game-info-large h1 {
-    color: #1a1a1a !important;
-}
-
-body.light-theme .game-meta {
-    color: #555 !important;
-}
-
-body.light-theme .game-description p {
-    color: #333 !important;
-}
-/* reparation bouton connexion mode clair */ 
-body.light-theme .user-actions a {
-    color: #1a1a1a !important;
-}
-
-body.light-theme .user-actions a:hover {
-    color: #ff4757 !important;
-}
-
-body.light-theme input {
-    background: #fff !important;
-    color: #1a1a1a !important;
-    border: 1px solid #ccc !important;
-}
+/* clair page jeu */
+body.light-theme .game-info-large h1 { color: #2c3348 !important; }
+body.light-theme .game-meta { color: #6b7280 !important; }
+body.light-theme .game-description p { color: #4b5563 !important; }
  
-/* wishlist */ 
+/* wishlist */
 .game-card { position: relative; overflow: hidden; }
 .btn-wishlist { position: absolute; top: 10px; right: 10px; z-index: 10; background: rgba(0,0,0,0.6); padding: 5px 8px; border-radius: 50%; text-decoration: none; font-size: 20px; transition: 0.2s; }
 .btn-wishlist:hover { transform: scale(1.1); background: rgba(0,0,0,0.8); }
 
-/* mode c/s auto */
-/* ========================================================= */
-/* 🌓 THÈME CLAIR AUTOMATIQUE (Si le navigateur le demande)  */
-/* ========================================================= */
-
-@media (prefers-color-scheme: light) {
-        body {
-        background-color: #f4f6f9 !important;
-        color: #2c3e50 !important;
-    }
-
-    nav, .site-footer {
-        background-color: #ffffff !important;
-        border-bottom: 1px solid #e1e8ed !important;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-
-    .game-card, aside, section {
-        background-color: #ffffff !important;
-        border: 1px solid #e1e8ed !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    }
-
-    .game-card h3, section h2 {
-        color: #1a1c24 !important;
-    }
-    
-    .game-card .desc, label {
-        color: #666666 !important;
-    }
-
-    input, select, textarea {
-        background-color: #ffffff !important;
-        color: #333333 !important;
-        border: 1px solid #ccc !important;
-    }
+/* badges carte */
+.badge-preorder {
+    position: absolute; top: 10px; left: 10px; z-index: 10;
+    background: #f39c12; color: #fff;
+    font-size: 10px; font-weight: 700; letter-spacing: .07em;
+    padding: 3px 8px; border-radius: 3px; text-transform: uppercase;
 }
+.badge-soon {
+    position: absolute; top: 10px; left: 10px; z-index: 10;
+    background: #6c757d; color: #fff;
+    font-size: 10px; font-weight: 700; letter-spacing: .07em;
+    padding: 3px 8px; border-radius: 3px; text-transform: uppercase;
+}
+.badge-tiers {
+    position: absolute; top: 32px; left: 10px; z-index: 10;
+    background: rgba(243,156,18,.85); color: #1a1c24;
+    font-size: 9px; font-weight: 700; letter-spacing: .07em;
+    padding: 2px 6px; border-radius: 3px; text-transform: uppercase;
+}
+.card-preorder { border-color: #f39c12 !important; }
+.btn-preorder { background: linear-gradient(135deg,#f39c12,#e67e22) !important; }
+
+/* Le thème clair OS est géré par JS (main.js) qui ajoute .light-theme sur body */
 
 /* SYSTEME D'ETOile */
 
@@ -1049,3 +1013,113 @@ body.light-theme input {
 .star-rating-inner::before {
     content: "★★★★★";
 }
+
+/* =============================================
+   RESPONSIVE MOBILE — à partir de 768px
+   (pas compliqué, juste du bon sens)
+   ============================================= */
+
+@media (max-width: 768px) {
+
+    /* ---- Base ---- */
+    body { font-size: 15px; }
+
+    .container {
+        padding: 16px !important;
+        max-width: 100% !important;
+    }
+
+    /* ---- Hero ---- */
+    .hero {
+        padding: 32px 18px !important;
+        min-height: 220px !important;
+    }
+    .hero h1 { font-size: 28px !important; }
+    .hero p   { font-size: 15px !important; }
+
+    /* ---- Grille de jeux ---- */
+    .games-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+    }
+
+    /* ---- Cartes ---- */
+    .card-image { height: 180px !important; }
+    .card-image img { height: 180px !important; }
+    .card-info { padding: 10px !important; }
+    .card-info h3 { font-size: 14px !important; }
+    .price { font-size: 17px !important; }
+    .btn-add { font-size: 12px !important; padding: 6px 10px !important; }
+
+    /* ---- Catalogue : sidebar passe au-dessus ---- */
+    .catalogue-layout {
+        flex-direction: column !important;
+    }
+    .catalogue-sidebar {
+        width: 100% !important;
+        position: static !important;
+    }
+
+    /* ---- Panier ---- */
+    .cart-container { flex-direction: column !important; }
+    .cart-summary   { position: static !important; width: 100% !important; }
+    .cart-item      { flex-wrap: wrap !important; gap: 10px !important; }
+    .cart-item img  { width: 50px !important; height: 65px !important; }
+
+    /* ---- Page Jeu ---- */
+    /* Le flex row du jeu passe en colonne */
+    [style*="display: flex; gap: 40px; background: #1a1c24"] {
+        flex-direction: column !important;
+        gap: 16px !important;
+    }
+
+    /* ---- Formulaires ---- */
+    input, select, textarea, button[type="submit"] {
+        font-size: 16px !important; /* évite le zoom auto sur iOS */
+    }
+
+    /* ---- Footer ---- */
+    .footer-container {
+        flex-direction: column !important;
+        gap: 20px !important;
+        padding: 0 16px !important;
+    }
+
+    /* ---- Admin / tableaux ---- */
+    table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    /* ---- Bouton principal ---- */
+    .btn-hero { padding: 11px 22px !important; font-size: 14px !important; }
+}
+
+@media (max-width: 480px) {
+
+    /* ---- Une seule colonne sur très petit écran ---- */
+    .games-grid { grid-template-columns: 1fr 1fr !important; }
+
+    /* ---- Textes ---- */
+    .section-title { font-size: 18px !important; }
+
+    /* ---- Grille admin stats ---- */
+    [style*="grid-template-columns: 2fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+    [style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+    [style*="grid-template-columns: repeat(2"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Touch : zones cliquables plus grandes sur mobile */
+@media (hover: none) {
+    .btn-wishlist { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; }
+    .dg-cart-btn  { padding: 10px 16px; }
+    a, button { -webkit-tap-highlight-color: transparent; }
+}
+
+/* === MODE CLAIR : étoiles et icônes ===
+   (les étoiles jaunes restent visibles sur fond blanc) */
+body.light-theme .star-rating::before { color: #d0d5e0; }
+body.light-theme .star-rating-inner { color: #e6a817; }

@@ -1,10 +1,8 @@
 <?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+// panel admin — import Steam, catalogue, promos, membres
 session_start();
 require 'db.php';
 
-// Sécurité
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header('Location: index.php');
     exit();
@@ -12,99 +10,74 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
 $message = '';
 
-// --- TRAITEMENT DES FORMULAIRES ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-  // ========================================================
-    // 🪄 IMPORTATION MAGIQUE DEPUIS STEAM (CATÉGORIE + DATE)
-    // ========================================================
     if (isset($_POST['action']) && $_POST['action'] === 'import_steam') {
         $id_steam_import = (int)$_POST['import_id_steam'];
-        
-        $url = "https://store.steampowered.com/api/appdetails?appids={$id_steam_import}&l=french";
+        $url     = "https://store.steampowered.com/api/appdetails?appids={$id_steam_import}&l=french";
         $reponse = @file_get_contents($url);
-        
+
         if ($reponse) {
             $data = json_decode($reponse, true);
             if (isset($data[$id_steam_import]['success']) && $data[$id_steam_import]['success']) {
-                $jeu_steam = $data[$id_steam_import]['data'];
-                
-                $titre = $jeu_steam['name'];
-                $description = strip_tags($jeu_steam['short_description']); 
-                
-                // GESTION AUTOMATIQUE DE LA CATÉGORIE
+                $jeu_steam   = $data[$id_steam_import]['data'];
+                $titre       = $jeu_steam['name'];
+                $description = strip_tags($jeu_steam['short_description']);
+
                 $id_cat_import = 1;
-                if (isset($jeu_steam['genres']) && count($jeu_steam['genres']) > 0) {
-                    $nom_genre_steam = $jeu_steam['genres'][0]['description']; 
-                    $verifCat = $pdo->prepare("SELECT id_cat FROM categorie WHERE nom_cat = ?");
-                    $verifCat->execute([$nom_genre_steam]);
+                if (!empty($jeu_steam['genres'])) {
+                    $nom_genre = $jeu_steam['genres'][0]['description'];
+                    $verifCat  = $pdo->prepare("SELECT id_cat FROM categorie WHERE nom_cat = ?");
+                    $verifCat->execute([$nom_genre]);
                     $catExistante = $verifCat->fetch();
-                    
                     if ($catExistante) {
-                        $id_cat_import = $catExistante['id_cat']; 
+                        $id_cat_import = $catExistante['id_cat'];
                     } else {
-                        $insertCat = $pdo->prepare("INSERT INTO categorie (nom_cat) VALUES (?)");
-                        $insertCat->execute([$nom_genre_steam]);
+                        $pdo->prepare("INSERT INTO categorie (nom_cat) VALUES (?)")->execute([$nom_genre]);
                         $id_cat_import = $pdo->lastInsertId();
                     }
                 }
 
-                // GESTION DU PRIX (0 si pas encore annoncé)
                 $prix = isset($jeu_steam['price_overview']) ? ($jeu_steam['price_overview']['initial'] / 100) : 0;
-                
-                // --- NOUVEAU : GESTION AUTOMATIQUE DE LA DATE DE SORTIE ---
+
                 $date_sortie_import = null;
-                if (isset($jeu_steam['release_date']) && !empty($jeu_steam['release_date']['date'])) {
-                    $date_brute = $jeu_steam['release_date']['date'];
-                    // On traduit les mois français pour que PHP comprenne la date
+                if (!empty($jeu_steam['release_date']['date'])) {
                     $date_anglaise = str_replace(
-                        ['janv.', 'févr.', 'avr.', 'juil.', 'sept.', 'oct.', 'nov.', 'déc.'], 
-                        ['jan', 'feb', 'apr', 'jul', 'sep', 'oct', 'nov', 'dec'], 
-                        $date_brute
+                        ['janv.', 'févr.', 'avr.', 'juil.', 'sept.', 'oct.', 'nov.', 'déc.'],
+                        ['jan',   'feb',   'apr',  'jul',   'sep',   'oct',  'nov',  'dec'],
+                        $jeu_steam['release_date']['date']
                     );
-                    $timestamp = strtotime($date_anglaise);
-                    
-                    // Si Steam donne une vraie date (ex: "15 nov. 2025"), on l'enregistre
-                    if ($timestamp) {
-                        $date_sortie_import = date('Y-m-d H:i:s', $timestamp);
-                    }
+                    $ts = strtotime($date_anglaise);
+                    if ($ts) $date_sortie_import = date('Y-m-d H:i:s', $ts);
                 }
-                // -----------------------------------------------------------
-                
-                // TÉLÉCHARGEMENT DE L'IMAGE
-                $image_url = $jeu_steam['header_image'];
+
                 $image_name = 'steam_' . $id_steam_import . '.jpg';
-                $image_data = @file_get_contents($image_url);
+                $image_data = @file_get_contents($jeu_steam['header_image']);
                 if ($image_data) {
                     file_put_contents('assets/img/' . $image_name, $image_data);
                 } else {
                     $image_name = 'default.jpg';
                 }
-                
-                // 1. On insère le jeu AVEC LA DATE DE SORTIE
+
                 $stmt = $pdo->prepare("INSERT INTO jeu (titre, description, prix, image, id_cat, id_steam, date_sortie) VALUES (?, ?, ?, ?, ?, ?, ?)");
                 $stmt->execute([$titre, $description, $prix, $image_name, $id_cat_import, $id_steam_import, $date_sortie_import]);
-                
                 $nouveau_jeu_id = $pdo->lastInsertId();
 
-                // 2. On insère les plateformes cochées
                 if (!empty($_POST['import_plateformes'])) {
                     $stmtPlat = $pdo->prepare("INSERT INTO jeu_plateforme (id_jeu, id_plateforme) VALUES (?, ?)");
                     foreach ($_POST['import_plateformes'] as $id_plat) {
-                        $stmtPlat->execute([$nouveau_jeu_id, $id_plat]);
+                        $stmtPlat->execute([$nouveau_jeu_id, (int)$id_plat]);
                     }
                 }
-                
-                $msg_date = $date_sortie_import ? "Date détectée : " . date('d/m/Y', strtotime($date_sortie_import)) : "Aucune date précise.";
-                $message = "🪄 MAGIE ! <strong>{$titre}</strong> importé ! ($msg_date)";
+
+                $msg_date = $date_sortie_import ? date('d/m/Y', strtotime($date_sortie_import)) : 'date inconnue';
+                $message = "✅ <strong>{$titre}</strong> importé avec succès ($msg_date).";
             } else {
-                $message = "❌ Erreur : Ce jeu n'existe pas ou l'ID est invalide.";
+                $message = "❌ Jeu introuvable sur Steam. Vérifiez l'ID.";
             }
         } else {
-            $message = "❌ Erreur de connexion à Steam.";
+            $message = "❌ Impossible de contacter Steam.";
         }
     }
-    // ========================================================
 
     if (isset($_POST['action']) && $_POST['action'] === 'remove_game_promo') {
         $id_j = $_POST['id_jeu'];
@@ -124,8 +97,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $date_sortie = !empty($_POST['date_sortie']) ? $_POST['date_sortie'] : null;
 
         if (!empty($_FILES['image']['name'])) {
-            $image_name = basename($_FILES["image"]["name"]);
-            move_uploaded_file($_FILES["image"]["tmp_name"], "assets/img/" . $image_name);
+            $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
+            if (in_array($ext, ['jpg','jpeg','png','webp','gif'])) {
+                $image_name = 'jeu_' . uniqid() . '.' . $ext;
+                move_uploaded_file($_FILES['image']['tmp_name'], 'assets/img/' . $image_name);
+            }
         }
 
         if ($_POST['action'] === 'add_jeu') {
@@ -219,10 +195,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// --- RÉCUPÉRATION DES DONNÉES ---
 $categories = $pdo->query("SELECT * FROM categorie ORDER BY nom_cat ASC")->fetchAll();
 $jeux = $pdo->query("SELECT j.*, c.nom_cat FROM jeu j JOIN categorie c ON j.id_cat = c.id_cat ORDER BY j.id_jeu DESC")->fetchAll();
-$utilisateurs = $pdo->query("SELECT * FROM utilisateur")->fetchAll();
+$utilisateurs = $pdo->query("SELECT id_user, pseudo, email, role FROM utilisateur ORDER BY role DESC, pseudo ASC")->fetchAll();
 $promos = $pdo->query("SELECT * FROM code_promo ORDER BY id_promo DESC")->fetchAll();
 $plateformes = $pdo->query("SELECT * FROM plateforme")->fetchAll();
 
@@ -247,7 +222,7 @@ if (isset($_GET['edit'])) {
     <link rel="stylesheet" href="assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
 </head>
-<body style="background: #0b0c10; color: white; font-family: 'Rajdhani', sans-serif;">
+<body>
 
     <?php include 'navbar.php'; ?>
 
@@ -272,8 +247,8 @@ if (isset($_GET['edit'])) {
                 
                 <?php if(!$jeu_a_modifier): ?>
                 <section style="background: #1a1c24; padding: 25px; border-radius: 8px; border: 1px solid #3498db; box-shadow: 0 0 15px rgba(52, 152, 219, 0.2);">
-                    <h2 style="margin-top: 0; color: #3498db;">🪄 Importation Magique via Steam</h2>
-                    <p style="color: #b3b3b3; font-size: 14px; margin-bottom: 15px;">Entrez l'ID Steam d'un jeu, choisissez sa catégorie et ses plateformes. Le site s'occupe du reste !</p>
+                    <h2 style="margin-top: 0; color: #3498db;">🎮 Importer via Steam</h2>
+                    <p style="color: #b3b3b3; font-size: 14px; margin-bottom: 15px;">Entrez l'ID Steam du jeu pour récupérer automatiquement ses données.</p>
                     
                     <form action="admin.php" method="POST" style="display: flex; flex-direction: column; gap: 15px;">
                         <input type="hidden" name="action" value="import_steam">
@@ -432,38 +407,96 @@ if (isset($_GET['edit'])) {
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
             
             <section style="background: #1a1c24; padding: 25px; border-radius: 8px; border: 1px solid #2a2c35;">
-                <h2 style="margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px;">👥 Membres Inscrits</h2>
-                <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-                    <tr style="border-bottom: 2px solid #333; color:#b3b3b3; text-align:left; font-size:14px;">
-                        <th style="padding-bottom:10px;">Pseudo</th><th>Rôle</th><th style="text-align:right;">Actions</th>
-                    </tr>
-                    <?php foreach($utilisateurs as $u): ?>
-                    <tr style="border-bottom: 1px solid #2a2c35;">
-                        <td style="padding:15px 0;"><?php echo htmlspecialchars($u['pseudo']); ?></td>
-                        <td style="color: <?php echo $u['role'] === 'admin' ? '#2ecc71' : ($u['role'] === 'tiers' ? '#f39c12' : '#ccc'); ?>; font-weight:bold;"><?php echo strtoupper($u['role']); ?></td>
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding-bottom:12px; margin-bottom:16px;">
+                    <h2 style="margin:0;">👥 Membres <span style="color:#9aa0b4; font-size:15px; font-weight:400;">(<?php echo count($utilisateurs); ?>)</span></h2>
+                    <!-- Recherche live — filtre les lignes du tableau côté client -->
+                    <input type="text" id="user-search"
+                           placeholder="Rechercher un membre..."
+                           style="padding:8px 12px; background:#0f1014; border:1px solid #333; color:white;
+                                  border-radius:6px; font-size:14px; width:220px; outline:none;"
+                           oninput="filtrerMembres(this.value)">
+                </div>
+
+                <table style="width: 100%; border-collapse: collapse;" id="user-table">
+                    <thead>
+                        <tr style="color:#9aa0b4; text-align:left; font-size:13px; text-transform:uppercase; letter-spacing:.05em;">
+                            <th style="padding-bottom:10px; font-weight:600;">Pseudo</th>
+                            <th style="font-weight:600;">Email</th>
+                            <th style="font-weight:600;">Rôle</th>
+                            <th style="text-align:right; font-weight:600;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach($utilisateurs as $u):
+                        $couleur_role = $u['role'] === 'admin' ? '#2ecc71' : ($u['role'] === 'tiers' ? '#f39c12' : '#9aa0b4');
+                    ?>
+                    <tr class="user-row" data-search="<?php echo strtolower(htmlspecialchars($u['pseudo'] . ' ' . ($u['email'] ?? '') . ' ' . $u['role'])); ?>"
+                        style="border-bottom:1px solid #1e2130;">
+                        <td style="padding:13px 0; font-weight:600;">
+                            <?php echo htmlspecialchars($u['pseudo']); ?>
+                            <?php if($u['id_user'] == $_SESSION['user_id']): ?>
+                                <span style="font-size:11px; background:#0055cc; color:white; padding:2px 6px; border-radius:3px; margin-left:6px;">Vous</span>
+                            <?php endif; ?>
+                        </td>
+                        <td style="color:#9aa0b4; font-size:13px;"><?php echo htmlspecialchars($u['email'] ?? '—'); ?></td>
+                        <td>
+                            <span style="background:<?php echo $couleur_role; ?>22; color:<?php echo $couleur_role; ?>;
+                                         padding:3px 9px; border-radius:4px; font-size:12px; font-weight:700; letter-spacing:.06em;">
+                                <?php echo strtoupper($u['role']); ?>
+                            </span>
+                        </td>
                         <td style="text-align:right;">
                             <?php if($u['id_user'] != $_SESSION['user_id']): ?>
-                                <form action="admin.php" method="POST" style="display:inline-flex; gap:5px;">
+                                <form action="admin.php" method="POST" style="display:inline-flex; gap:5px; align-items:center;">
                                     <input type="hidden" name="action" value="change_role">
                                     <input type="hidden" name="id_user" value="<?php echo $u['id_user']; ?>">
-                                    <select name="role" style="padding:4px; font-size:12px; background:#0f1014; color:white; border:1px solid #333;">
+                                    <select name="role" style="padding:5px 8px; font-size:12px; background:#0f1014; color:white; border:1px solid #333; border-radius:4px;">
                                         <option value="client" <?php if($u['role']=='client') echo 'selected'; ?>>Client</option>
-                                        <option value="tiers" <?php if($u['role']=='tiers') echo 'selected'; ?>>Vendeur</option>
-                                        <option value="admin" <?php if($u['role']=='admin') echo 'selected'; ?>>Admin</option>
+                                        <option value="tiers"  <?php if($u['role']=='tiers')  echo 'selected'; ?>>Vendeur</option>
+                                        <option value="admin"  <?php if($u['role']=='admin')  echo 'selected'; ?>>Admin</option>
                                     </select>
-                                    <button type="submit" style="background:#3498db; color:white; border:none; padding:4px 8px; cursor:pointer; border-radius:2px;">✔</button>
+                                    <button type="submit" style="background:#0055cc; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:4px; font-size:13px;">✔</button>
                                 </form>
-                                <form action="admin.php" method="POST" style="display:inline; margin-left:10px;">
+                                <form action="admin.php" method="POST" style="display:inline; margin-left:6px;">
                                     <input type="hidden" name="action" value="delete_user">
                                     <input type="hidden" name="id_user" value="<?php echo $u['id_user']; ?>">
-                                    <button type="submit" onclick="return confirm('Bannir ?')" style="background:none; border:none; color:#ff4757; cursor:pointer; font-size:16px;">🗑️</button>
+                                    <button type="submit" onclick="return confirm('Supprimer ce compte ?')"
+                                            style="background:none; border:1px solid #ff475740; color:#ff4757; cursor:pointer;
+                                                   font-size:13px; padding:5px 9px; border-radius:4px; transition:.15s;"
+                                            onmouseover="this.style.background='#ff475720'"
+                                            onmouseout="this.style.background='none'">🗑 Suppr.</button>
                                 </form>
                             <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>
+                    </tbody>
                 </table>
+
+                <!-- Message quand aucun résultat -->
+                <p id="user-no-result" style="display:none; text-align:center; color:#9aa0b4; padding:20px 0; font-size:14px;">
+                    Aucun membre ne correspond à la recherche.
+                </p>
             </section>
+
+            <script>
+            // Filtre les lignes du tableau sans recharger la page
+            function filtrerMembres(terme) {
+                terme = terme.toLowerCase().trim();
+                var rows   = document.querySelectorAll('.user-row');
+                var aucun  = true;
+                rows.forEach(function(row) {
+                    var match = !terme || row.dataset.search.includes(terme);
+                    row.style.display = match ? '' : 'none';
+                    if (match) aucun = false;
+                });
+                document.getElementById('user-no-result').style.display = aucun ? 'block' : 'none';
+            }
+            // Focus auto sur la barre si l'utilisateur tape
+            document.getElementById('user-search').addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') { this.value = ''; filtrerMembres(''); }
+            });
+            </script>
 
             <section style="background: #1a1c24; padding: 25px; border-radius: 8px; border: 1px solid #2a2c35;">
                 <h2 style="margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px;">🎟️ Codes Promos</h2>

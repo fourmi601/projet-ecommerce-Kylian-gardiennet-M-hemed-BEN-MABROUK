@@ -1,7 +1,5 @@
-<?php 
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
+<?php
+// auth : admin → BDD locale / client → BDD Ecotech
 session_start();
 require 'db.php';
 require_once 'marchands-config.php';
@@ -9,8 +7,8 @@ require_once 'marchands-config.php';
 $erreur = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = $_POST['email'];
-    $password = $_POST['password'];
+    $email    = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
 
     $stmt_local = $pdo->prepare("SELECT * FROM utilisateur WHERE email = ?");
     $stmt_local->execute([$email]);
@@ -23,14 +21,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['role']          = $user_local['role'];
             $_SESSION['email']         = $user_local['email'];
             $_SESSION['ecotech_token'] = 'ADMIN_LOCAL';
-            
             header('Location: admin.php');
             exit();
         } else {
-            $erreur = "Mot de passe Admin incorrect.";
+            $erreur = "Mot de passe incorrect.";
         }
-    } 
-    else {
+    } else {
         try {
             $pdo_bank = new PDO("mysql:host=100.65.154.19;dbname=ecotech_db;charset=utf8mb4", "dev_remote", "ezechiel", [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -42,26 +38,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user_bank = $stmt_bank->fetch();
 
             if ($user_bank && password_verify($password, $user_bank['password'])) {
-                
                 if ($user_local) {
                     $_SESSION['user_id']       = $user_local['id_user'];
                     $_SESSION['pseudo']        = $user_local['pseudo'];
                     $_SESSION['role']          = $user_local['role'];
                     $_SESSION['email']         = $user_local['email'];
-                    $_SESSION['ecotech_token'] = $user_bank['token'] ?? ''; 
-                    
+                    $_SESSION['ecotech_token'] = $user_bank['token'] ?? '';
                     header('Location: index.php');
                     exit();
                 } else {
                     $erreur = "Compte bancaire valide, mais vous n'êtes pas inscrit sur Digital Games.";
                 }
-
             } else {
-                $erreur = "Adresse e-mail ou mot de passe incorrect (Refusé par Ecotech Bank).";
+                $erreur = "Adresse e-mail ou mot de passe incorrect.";
             }
-
         } catch (PDOException $e) {
-            $erreur = "Impossible de joindre le serveur bancaire : " . $e->getMessage();
+            $erreur = "Le serveur bancaire est temporairement indisponible. Réessayez plus tard.";
         }
     }
 }
@@ -78,37 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 
-    <nav>
-        <div class="logo-container">
-            <a href="index.php"><img src="assets/img/logo.jpg" alt="Logo Digital Games" class="site-logo"></a>
-        </div>
-        <div class="search-box">
-            <input type="text" placeholder="Rechercher...">
-            <button>🔍</button>
-        </div>
-        <div class="nav-links">
-            <a href="index.php">Accueil</a>
-            <a href="catalogue.php">Catalogue</a>
-            <button id="theme-toggle" class="nav-theme-btn">Mode Clair</button>
-            <a href="contact.php">Contact</a>
-        </div>
-       <div class="user-actions">
-    <?php if (isset($_SESSION['user_id'])): ?>
-        
-        <?php if ($_SESSION['role'] === 'admin'): ?>
-            <a href="admin.php" style="color: #2ecc71; font-weight: bold;">⚙️ Admin</a>
-        <?php endif; ?>
-
-        <a href="#" class="active">👤 Salut <?php echo htmlspecialchars($_SESSION['pseudo']); ?></a>
-        <a href="deconnexion.php" style="color: #ff4757;">Déconnexion</a>
-        
-    <?php else: ?>
-        <a href="connexion.php" class="active">👤 Compte</a>
-    <?php endif; ?>
-    
-    <a href="panier.php" class="cart-btn">🛒 Panier</a>
-</div>
-    </nav>
+    <?php include 'navbar.php'; ?>
 
     <div class="container" style="min-height: 60vh; display: flex; justify-content: center; align-items: center;">
         <div style="background: var(--bg-panel, #1a1c24); padding: 40px; border-radius: 8px; border: 1px solid #2a2c35; width: 100%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
@@ -138,12 +100,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <footer class="site-footer">
-        <div class="footer-bottom">
-            <p>&copy; <?php echo date('Y'); ?> Digital Games. Tous droits réservés.</p>
-        </div>
-    </footer>
-
-    <script src="assets/js/main.js"></script>
+    <?php include 'footer.php'; ?>
 </body>
 </html>

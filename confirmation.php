@@ -1,38 +1,40 @@
 <?php
+// retour banque → verif token → génère clés CD → insert commande/contenir/histo
 session_start();
 require 'db.php';
 
-// 1. Vérification de la session et du panier
-if (!isset($_SESSION['user_id']) || empty($_SESSION['panier'])) { 
-    header('Location: index.php'); 
-    exit(); 
+if (!isset($_SESSION['user_id'])) {
+    header('Location: erreur_paiement.php?code=non_connecte&message=' . urlencode("Vous devez être connecté pour accéder à la confirmation de commande."));
+    exit();
+}
+if (empty($_SESSION['panier'])) {
+    header('Location: erreur_paiement.php?code=panier_vide&message=' . urlencode("Le panier est vide ou a déjà été traité."));
+    exit();
 }
 
-// --- 2. NOUVEAU : RÉCUPÉRATION DU RETOUR DE LA BANQUE ---
-$status = $_GET['status'] ?? '';
-$token_banque = $_GET['token'] ?? '';
+$status       = $_GET['status'] ?? '';
+$token_banque = $_GET['token']  ?? '';
 
-// Si le statut n'est pas "success" ou qu'il n'y a pas de token, on bloque la création des clés !
 if ($status !== 'success' || empty($token_banque)) {
-    die("<div style='background:#1a1c24; color:white; padding:40px; text-align:center; font-family:sans-serif;'>
-            <h1 style='color:#ff4757;'>❌ Erreur de paiement</h1>
-            <p>La transaction n'a pas été validée par la banque ou le jeton est manquant.</p>
-            <a href='panier.php' style='color:#3498db;'>Retourner au panier</a>
-         </div>");
+    $msg = ($status === 'cancel')
+        ? "Vous avez annulé le paiement sur l'interface bancaire."
+        : "La transaction n'a pas été validée par la banque (statut : " . htmlspecialchars($status ?: 'absent') . ").";
+    header('Location: erreur_paiement.php?code=token_invalide&message=' . urlencode($msg));
+    exit();
 }
-// --------------------------------------------------------
 
-$id_user = $_SESSION['user_id'];
-$total = $_SESSION['total_a_payer'];
+$id_user    = $_SESSION['user_id'];
+$total      = $_SESSION['total_a_payer'];
 $date_achat = date('Y-m-d H:i:s');
-$cles_generees = []; 
+$cles_generees = [];
 
 try {
-    // 3. Création de la commande
     $pdo->prepare("INSERT INTO commande (date_achat, prix_total, id_user) VALUES (?, ?, ?)")->execute([$date_achat, $total, $id_user]);
     $id_commande = $pdo->lastInsertId();
 
-    function genererCleCD() { return strtoupper(substr(md5(uniqid()), 0, 4) . '-' . substr(md5(uniqid()), 4, 4) . '-' . substr(md5(uniqid()), 8, 4)); }
+    function genererCleCD() {
+        return strtoupper(bin2hex(random_bytes(2)) . '-' . bin2hex(random_bytes(2)) . '-' . bin2hex(random_bytes(2)));
+    }
 
     $ids = array_keys($_SESSION['panier']);
     $placeholders = str_repeat('?,', count($ids) - 1) . '?';
@@ -40,24 +42,29 @@ try {
     $jeux->execute($ids);
     
     $stmtContenir = $pdo->prepare("INSERT INTO contenir (id_jeu, id_commande, prix_achat, cle_cd) VALUES (?, ?, ?, ?)");
+    $stmtHisto    = $pdo->prepare("INSERT INTO historique_ventes (id_jeu, prix_paye, date_vente) VALUES (?, ?, NOW())");
+    $stmtVentes   = $pdo->prepare("UPDATE jeu SET ventes = ventes + 1 WHERE id_jeu = ?");
 
-    // 4. Génération des clés
     foreach ($jeux->fetchAll() as $jeu) {
         $quantite = $_SESSION['panier'][$jeu['id_jeu']];
         for ($i = 0; $i < $quantite; $i++) {
             $cle_unique = genererCleCD();
-            $stmtContenir->execute([$jeu['id_jeu'], $id_commande, $jeu['prix'], $cle_unique]);
-            
+            $prix_final = $jeu['prix'];
+            $stmtContenir->execute([$jeu['id_jeu'], $id_commande, $prix_final, $cle_unique]);
+            $stmtHisto->execute([$jeu['id_jeu'], $prix_final]);
+            $stmtVentes->execute([$jeu['id_jeu']]);
             $cles_generees[] = ['titre' => $jeu['titre'], 'image' => $jeu['image'], 'cle' => $cle_unique];
         }
     }
 
-    // 5. On vide le panier
     unset($_SESSION['panier']); 
     unset($_SESSION['total_a_payer']); 
     if(isset($_SESSION['promo'])) unset($_SESSION['promo']);
 
-} catch (Exception $e) { die("Erreur : " . $e->getMessage()); }
+} catch (Exception $e) {
+    header('Location: erreur_paiement.php?code=commande_echec&message=' . urlencode("Erreur technique lors de l'enregistrement de la commande.") . '&contexte=' . urlencode($e->getMessage()));
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -73,12 +80,13 @@ try {
         .cle-visible { filter: none; color: #2ecc71; user-select: all; cursor: default; }
     </style>
 </head>
-<body style="background: #0b0c10; color: white; font-family: 'Rajdhani', sans-serif;">
+<body>
+    <?php include 'navbar.php'; ?>
     <div class="container" style="max-width: 800px; margin: 50px auto; background: #1a1c24; padding: 40px; border-radius: 8px;">
         <h1 style="color: #2ecc71; text-align: center;">✅ Commande N°<?php echo $id_commande; ?> réussie !</h1>
         
         <p style="text-align: center; color: #666; font-size: 14px; margin-top: -10px;">
-            Transaction bancaire : <?php echo htmlspecialchars($token_banque); ?>
+            Réf. transaction : <?php echo substr(htmlspecialchars($token_banque), 0, 8); ?>****
         </p>
 
         <p style="text-align: center; color: #b3b3b3;">Cliquez sur la zone floutée pour révéler et copier votre clé CD.</p>
@@ -100,8 +108,9 @@ try {
             <?php endforeach; ?>
         </div>
         
-        <div style="text-align: center; margin-top: 40px;">
-            <a href="bibliotheque.php" class="btn-hero" style="text-decoration: none; padding: 15px 30px; background: #2ecc71; color: white; border-radius: 4px; font-weight: bold;">ACTIVER MON JEU DANS MA BIBLIOTHÈQUE</a>
+        <div style="text-align: center; margin-top: 40px; display:flex; gap:14px; justify-content:center; flex-wrap:wrap;">
+            <a href="bibliotheque.php" style="text-decoration:none; padding:14px 28px; background:#2ecc71; color:white; border-radius:6px; font-weight:bold; font-size:16px;">ACTIVER DANS MA BIBLIOTHÈQUE</a>
+            <a href="facture.php?id=<?php echo $id_commande; ?>" target="_blank" style="text-decoration:none; padding:14px 28px; background:#0055cc; color:white; border-radius:6px; font-weight:bold; font-size:16px;">🧾 TÉLÉCHARGER LA FACTURE</a>
         </div>
     </div>
 

@@ -12,9 +12,8 @@ if (isset($_SESSION['user_id'])) {
     $ma_wishlist = $stmtWish->fetchAll(PDO::FETCH_COLUMN);
 
     if (!empty($ma_wishlist)) {
-        $ids = implode(',', $ma_wishlist);
-        $stmtSolde = $pdo->query("SELECT COUNT(*) FROM jeu WHERE id_jeu IN ($ids) AND prix_solde > 0");
-        $nb_promos_wishlist = $stmtSolde->fetchColumn(); 
+        $ids = implode(',', array_map('intval', $ma_wishlist));
+        $nb_promos_wishlist = $pdo->query("SELECT COUNT(*) FROM jeu WHERE id_jeu IN ($ids) AND prix_solde > 0")->fetchColumn();
     }
 }
 
@@ -62,36 +61,13 @@ $jeux = $stmt->fetchAll();
     <link rel="stylesheet" href="assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
 </head>
-<body style="background: #0b0c10; color: white; font-family: 'Rajdhani', sans-serif;">
+<body>
 
-    <nav style="padding: 20px; background: #1a1c24; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2c35;">
-        <div class="logo-container"><a href="index.php"><img src="assets/img/logo.jpg" alt="Logo" class="site-logo" style="height: 40px;"></a></div>
-        
-        <div class="nav-links">
-            <a href="index.php">Accueil</a>
-            <a href="catalogue.php" class="active" style="color: #3498db; font-weight: bold;">Catalogue</a>
-        </div>
+    <?php include 'navbar.php'; ?>
 
-        <div class="user-actions" style="display: flex; align-items: center; gap: 15px;">
-            <?php if (isset($_SESSION['user_id'])): ?>
-                <a href="wishlist.php" style="position: relative; text-decoration: none; font-size: 24px; display: inline-block;">
-                    🔔
-                    <?php if ($nb_promos_wishlist > 0): ?>
-                        <span style="position: absolute; top: -5px; right: -8px; background: #ff4757; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.5);"><?php echo $nb_promos_wishlist; ?></span>
-                    <?php endif; ?>
-                </a>
-                <a href="mon_compte.php" style="color: white; text-decoration: none;">👤 Mon Compte</a>
-            <?php else: ?>
-                <a href="connexion.php" style="color: white; text-decoration: none;">👤 Connexion</a>
-            <?php endif; ?>
-            
-            <a href="panier.php" class="cart-btn" style="background: #00439C; color: white; padding: 10px 15px; border-radius: 4px; text-decoration: none; font-weight: bold;">🛒 Panier (<?php echo $nb_articles; ?>)</a>
-        </div>
-    </nav>
+    <div class="container catalogue-layout" style="padding: 40px; max-width: 1400px; margin: auto; display: flex; gap: 40px; align-items: flex-start;">
 
-    <div class="container" style="padding: 40px; max-width: 1400px; margin: auto; display: flex; gap: 40px; align-items: flex-start;">
-        
-        <aside style="width: 280px; background: #1a1c24; padding: 25px; border-radius: 8px; border: 1px solid #2a2c35; position: sticky; top: 20px;">
+        <aside class="catalogue-sidebar" style="width: 280px; background: #1a1c24; padding: 25px; border-radius: 8px; border: 1px solid #2a2c35; position: sticky; top: 80px;">
             <h2 style="margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px; font-size: 22px;">🔍 Filtrer les jeux</h2>
             
             <form action="catalogue.php" method="GET" style="display: flex; flex-direction: column; gap: 20px; margin-top: 20px;">
@@ -137,10 +113,25 @@ $jeux = $stmt->fetchAll();
             </div>
 
             <div class="games-grid">
-                <?php if (count($jeux) > 0): ?>
-                    <?php foreach ($jeux as $jeu): ?>
-                        <div class="game-card">
-                            
+                <?php if (count($jeux) > 0):
+                    $now = date('Y-m-d H:i:s');
+                    foreach ($jeux as $jeu):
+                        $est_precommande = !empty($jeu['date_sortie']) && $jeu['date_sortie'] > $now;
+                        $est_indispo     = $jeu['prix'] <= 0;
+                        $est_tiers       = !empty($jeu['id_vendeur']);
+                ?>
+                        <div class="game-card<?php echo $est_precommande ? ' card-preorder' : ''; ?>">
+
+                            <?php if ($est_precommande): ?>
+                                <span class="badge-preorder">PRÉCOMMANDE</span>
+                            <?php elseif ($est_indispo): ?>
+                                <span class="badge-soon">BIENTÔT</span>
+                            <?php endif; ?>
+
+                            <?php if ($est_tiers): ?>
+                                <span class="badge-tiers">TIERS</span>
+                            <?php endif; ?>
+
                             <?php if (isset($_SESSION['user_id'])): ?>
                                 <?php $est_favori = in_array($jeu['id_jeu'], $ma_wishlist); ?>
                                 <a href="ajouter_wishlist.php?id_jeu=<?php echo $jeu['id_jeu']; ?>" class="btn-wishlist">
@@ -149,40 +140,49 @@ $jeux = $stmt->fetchAll();
                             <?php endif; ?>
 
                             <div class="card-image">
-    <a href="jeu.php?id=<?php echo $jeu['id_jeu']; ?>">
-        <img src="assets/img/<?php echo htmlspecialchars($jeu['image']); ?>" alt="<?php echo htmlspecialchars($jeu['titre']); ?>">
-    </a> <span class="platform-tag"><?php echo htmlspecialchars($jeu['nom_cat']); ?></span>
-</div>
-                            
+                                <a href="jeu.php?id=<?php echo $jeu['id_jeu']; ?>">
+                                    <img src="assets/img/<?php echo htmlspecialchars($jeu['image']); ?>" alt="<?php echo htmlspecialchars($jeu['titre']); ?>">
+                                </a>
+                                <span class="platform-tag"><?php echo htmlspecialchars($jeu['nom_cat']); ?></span>
+                            </div>
+
                             <div class="card-info">
                                 <h3><?php echo htmlspecialchars($jeu['titre']); ?></h3>
-                                <p class="desc"><?php echo substr(htmlspecialchars($jeu['description']), 0, 40) . '...'; ?></p>
-                                
-                                <div class="price-row" style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-                                    <div>
-                                        <?php if ($jeu['prix_solde'] > 0): ?>
-                                            <span style="text-decoration: line-through; color: #ff4757; font-size: 14px; margin-right: 5px;"><?php echo number_format($jeu['prix'], 2); ?>€</span>
-                                            <span class="price" style="font-size: 20px; font-weight: bold; color: #2ecc71;"><?php echo number_format($jeu['prix_solde'], 2); ?>€</span>
-                                        <?php else: ?>
-                                            <span class="price" style="font-size: 20px; font-weight: bold; color: #2ecc71;"><?php echo number_format($jeu['prix'], 2); ?>€</span>
-                                        <?php endif; ?>
-                                    </div>
-                                    <a href="ajouter_panier.php?id_jeu=<?php echo $jeu['id_jeu']; ?>" class="btn-add" style="background: #ff4757; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none; font-weight: bold; transition: 0.3s;">
-                                        Ajouter
-                                    </a>
+                                <p class="desc"><?php echo substr(htmlspecialchars($jeu['description']), 0, 50) . '…'; ?></p>
+
+                                <div class="price-row">
+                                    <?php if ($est_indispo): ?>
+                                        <span style="font-size:14px; color:#f39c12; font-weight:bold;">⏳ À venir</span>
+                                        <button disabled class="btn-add" style="opacity:.45; cursor:not-allowed;">Indisponible</button>
+                                    <?php else: ?>
+                                        <div>
+                                            <?php if ($jeu['prix_solde'] > 0): ?>
+                                                <span style="text-decoration:line-through; color:#ff4757; font-size:13px; margin-right:4px;"><?php echo number_format($jeu['prix'], 2); ?>€</span>
+                                                <span class="price"><?php echo number_format($jeu['prix_solde'], 2); ?>€</span>
+                                            <?php else: ?>
+                                                <span class="price"><?php echo number_format($jeu['prix'], 2); ?>€</span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <a href="ajouter_panier.php?id_jeu=<?php echo $jeu['id_jeu']; ?>"
+                                           class="btn-add<?php echo $est_precommande ? ' btn-preorder' : ''; ?>">
+                                            <?php echo $est_precommande ? '🕐 Précommander' : 'Ajouter'; ?>
+                                        </a>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
-                    <?php endforeach; ?>
+                <?php endforeach; ?>
                 <?php else: ?>
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 50px; background: #1a1c24; border-radius: 8px;">
-                        <h3 style="color: #ff4757; margin-bottom: 10px;">Aucun jeu ne correspond à vos critères</h3>
-                        <p style="color: #b3b3b3;">Essayez de modifier vos filtres ou de réinitialiser votre recherche.</p>
+                    <div style="grid-column:1/-1; text-align:center; padding:50px; background:#1a1c24; border-radius:8px;">
+                        <h3 style="color:#ff4757; margin-bottom:10px;">Aucun jeu ne correspond à vos critères</h3>
+                        <p style="color:#b3b3b3;">Essayez de modifier vos filtres ou de réinitialiser votre recherche.</p>
                     </div>
                 <?php endif; ?>
             </div>
         </main>
 
     </div>
+
+    <?php include 'footer.php'; ?>
 </body>
 </html>

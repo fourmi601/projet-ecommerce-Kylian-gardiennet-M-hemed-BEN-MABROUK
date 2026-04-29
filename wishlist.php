@@ -36,13 +36,7 @@ $nb_articles = isset($_SESSION['panier']) ? count($_SESSION['panier']) : 0;
 </head>
 <body style="background: #0b0c10; color: white; font-family: 'Rajdhani', sans-serif;">
 
-    <nav style="padding: 20px; background: #1a1c24; display: flex; justify-content: space-between; align-items: center;">
-        <div class="logo-container"><a href="index.php"><img src="assets/img/logo.jpg" alt="Logo" class="site-logo" style="height: 125px;"></a></div>
-        <div class="user-actions" style="display: flex; gap: 15px; align-items: center;">
-            <a href="mon_compte.php" style="color: white; text-decoration: none;">👤 Mon Compte</a>
-            <a href="panier.php" class="cart-btn" style="background: #00439C; color: white; padding: 10px 15px; border-radius: 4px; text-decoration: none;">🛒 Panier (<?php echo $nb_articles; ?>)</a>
-        </div>
-    </nav>
+    <?php include 'navbar.php'; ?>
 
     <div class="container" style="padding: 40px; max-width: 1200px; margin: auto;">
         <h1 style="border-bottom: 2px solid #ff4757; padding-bottom: 10px; margin-bottom: 30px;">❤️ Ma Liste de Souhaits</h1>
@@ -85,5 +79,7 @@ $nb_articles = isset($_SESSION['panier']) ? count($_SESSION['panier']) : 0;
             </div>
         <?php endif; ?>
     </div>
+
+    <?php include 'footer.php'; ?>
 </body>
 </html>

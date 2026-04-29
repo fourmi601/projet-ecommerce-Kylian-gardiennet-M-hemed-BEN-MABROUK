@@ -1,73 +1,61 @@
-<?php 
+<?php
+// inscription : 1) API Ecotech → 2) insert BDD locale
 session_start();
-// OBLIGATOIRE : On garde les deux fichiers de connexion !
-require 'db.php'; 
+require 'db.php';
 require_once 'marchands-config.php';
 
 $erreur = '';
 $succes = '';
+$redirect_connexion = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $pseudo   = $_POST['pseudo'] ?? '';
-    $email    = $_POST['email'] ?? '';
-    $password = $_POST['password'] ?? '';
+    $pseudo   = trim($_POST['pseudo'] ?? '');
+    $email    = trim($_POST['email']  ?? '');
+    $password = $_POST['password']    ?? '';
 
     if (empty($pseudo) || empty($email) || empty($password)) {
         $erreur = "Veuillez remplir tous les champs.";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $erreur = "Adresse e-mail invalide.";
+    } elseif (strlen($password) < 6) {
+        $erreur = "Le mot de passe doit contenir au moins 6 caractères.";
     } else {
-        
-        // 1. On vérifie sur TON site si l'email existe déjà
         $check = $pdo->prepare("SELECT id_user FROM utilisateur WHERE email = ?");
         $check->execute([$email]);
-        
-        if ($check->fetch()) {
-            $erreur = "Cet email est déjà utilisé sur Digital Games !";
-        } else {
-            
-            // 2. On contacte l'API de ton pote (Ecotech Bank)
-            $data = json_encode([
-                'username' => $pseudo,
-                'email'    => $email,
-                'password' => $password
-            ]);
 
-            $ch = curl_init(ECOTECH_API_URL);
+        if ($check->fetch()) {
+            $erreur = "Cette adresse e-mail est déjà utilisée.";
+        } else {
+            $data = json_encode(['username' => $pseudo, 'email' => $email, 'password' => $password]);
+            $ch   = curl_init(ECOTECH_API_URL);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
             curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
             curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-            
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
                 'Content-Length: ' . strlen($data),
                 'X-API-KEY: ' . ECOTECH_API_KEY
             ]);
-
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $response  = curl_exec($ch);
             $curlError = curl_error($ch);
             curl_close($ch);
 
             if ($response === false) {
-                $erreur = "Le serveur Ecotech est injoignable : " . $curlError;
+                $erreur = "Le service d'inscription est temporairement indisponible.";
             } else {
                 $resultat = json_decode($response, true);
-
                 if (isset($resultat['status']) && $resultat['status'] === 'success') {
-                    
-                    // 3. LA BANQUE A DIT OUI ! On insère dans TA base de données locale.
-                    $password_hashed = password_hash($password, PASSWORD_DEFAULT);
+                    $hash = password_hash($password, PASSWORD_DEFAULT);
                     $stmt = $pdo->prepare("INSERT INTO utilisateur (pseudo, email, password, role) VALUES (?, ?, ?, 'client')");
-                    
-                    if ($stmt->execute([$pseudo, $email, $password_hashed])) {
-                        // SUCCÈS !
-                        $succes = $resultat['message'] . " Redirection en cours...";
-                        header('Refresh: 3; url=connexion.php');
+                    if ($stmt->execute([$pseudo, $email, $hash])) {
+                        $succes = "Compte créé avec succès ! Redirection en cours…";
+                        $redirect_connexion = true;
                     } else {
-                        $erreur = "Compte bancaire créé, mais erreur lors de l'enregistrement sur la boutique.";
+                        $erreur = "Erreur lors de l'enregistrement du compte.";
                     }
                 } else {
-                    $erreur = $resultat['message'] ?? "L'API a refusé l'inscription.";
+                    $erreur = "L'inscription a été refusée. Vérifiez vos informations.";
                 }
             }
         }
@@ -85,37 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 
-    <nav>
-        <div class="logo-container">
-            <a href="index.php"><img src="assets/img/logo.jpg" alt="Logo Digital Games" class="site-logo"></a>
-        </div>
-        <div class="search-box">
-            <input type="text" placeholder="Rechercher...">
-            <button>🔍</button>
-        </div>
-        <div class="nav-links">
-            <a href="index.php">Accueil</a>
-            <a href="#">Catalogue PC</a>
-            <button id="theme-toggle" class="nav-theme-btn">Mode Clair</button>
-            <a href="contact.php">Contact</a>
-        </div>
-       <div class="user-actions">
-    <?php if (isset($_SESSION['user_id'])): ?>
-        
-        <?php if ($_SESSION['role'] === 'admin'): ?>
-            <a href="admin.php" style="color: #2ecc71; font-weight: bold;">⚙️ Admin</a>
-        <?php endif; ?>
-
-        <a href="#" class="active">👤 Salut <?php echo htmlspecialchars($_SESSION['pseudo']); ?></a>
-        <a href="deconnexion.php" style="color: #ff4757;">Déconnexion</a>
-        
-    <?php else: ?>
-        <a href="connexion.php" class="active">👤 Compte</a>
-    <?php endif; ?>
-    
-    <a href="panier.php" class="cart-btn">🛒 Panier</a>
-</div>
-    </nav>
+    <?php include 'navbar.php'; ?>
 
     <div class="container" style="min-height: 60vh; display: flex; justify-content: center; align-items: center; margin-top: 40px; margin-bottom: 40px;">
         
@@ -152,8 +110,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <button type="submit" class="btn-hero" style="width: 100%; padding: 15px; border: none; cursor: pointer; font-size: 18px; margin-top: 10px;">S'INSCRIRE</button>
-                
             </form>
+            <?php if ($redirect_connexion): ?>
+            <script>setTimeout(function(){ window.location.href = 'connexion.php'; }, 2500);</script>
+            <?php endif; ?>
 
             <p style="text-align: center; margin-top: 25px; color: #b3b3b3;">
                 Déjà un compte ? <a href="connexion.php" style="color: #ff4757; text-decoration: none; font-weight: bold;">Se connecter</a>
@@ -162,34 +122,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     </div>
 
-    <footer class="site-footer">
-        <div class="footer-container">
-            <div class="footer-col">
-                <img src="assets/img/logo.jpg" alt="Logo Digital Games" class="footer-logo">
-                <p>Votre boutique N°1 de clés CD officielles.</p>
-            </div>
-            <div class="footer-col">
-                <h3>Liens Rapides</h3>
-                <ul>
-                    <li><a href="index.php">Accueil</a></li>
-                    <li><a href="#">Catalogue PC</a></li>
-                    <li><a href="panier.php">Mon Panier</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h3>Informations</h3>
-                <ul>
-                    <li><a href="mentions-legales.php">Mentions Légales</a></li>
-                    <li><a href="cgv.php">Conditions Générales de Vente</a></li>
-                    <li><a href="contact.php">Contactez-nous</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; <?php echo date('Y'); ?> Digital Games. Tous droits réservés.</p>
-        </div>
-    </footer>
-
-    <script src="assets/js/main.js"></script>
+    <?php include 'footer.php'; ?>
 </body>
 </html>

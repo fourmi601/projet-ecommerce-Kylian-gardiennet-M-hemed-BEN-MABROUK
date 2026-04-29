@@ -17,12 +17,9 @@ $total = $_SESSION['total_a_payer'];
     <link rel="stylesheet" href="assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
 </head>
-<body style="background: #0b0c10; color: white; font-family: 'Rajdhani', sans-serif;">
+<body>
 
-    <nav style="padding: 20px; background: #1a1c24; display: flex; justify-content: space-between;">
-        <a href="panier.php" style="color: #ff4757; text-decoration: none; font-weight: bold;">← RETOUR AU PANIER</a>
-        <span style="font-size: 20px;">Montant à régler : <strong style="color: #2ecc71;"><?php echo number_format($total, 2); ?> €</strong></span>
-    </nav>
+    <?php include 'navbar.php'; ?>
 
     <div class="container" style="max-width: 600px; margin: 50px auto; background: #1a1c24; padding: 40px; border-radius: 8px; border: 1px solid #2a2c35; text-align: center;">
         <h2 style="margin-bottom: 20px; font-size: 28px;">Paiement Sécurisé 🔒</h2>

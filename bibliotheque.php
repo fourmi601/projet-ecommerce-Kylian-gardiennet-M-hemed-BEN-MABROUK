@@ -7,37 +7,30 @@ if (!isset($_SESSION['user_id'])) { header('Location: connexion.php'); exit(); }
 $message = '';
 $type_message = '';
 
-// --- 1. SYSTÈME D'ACTIVATION DE CLÉ ---
 if (isset($_POST['activer'])) {
-    $cle_saisie = trim($_POST['cle_cd']);
-    
-    // On vérifie si la clé existe dans la table 'contenir' (si elle a bien été vendue)
-    $stmt = $pdo->prepare("SELECT id_jeu FROM contenir WHERE cle_cd = ?");
+    $cle_saisie   = trim($_POST['cle_cd']);
+    $stmt         = $pdo->prepare("SELECT id_jeu FROM contenir WHERE cle_cd = ?");
     $stmt->execute([$cle_saisie]);
     $jeu_concerne = $stmt->fetch();
 
     if ($jeu_concerne) {
-        // On vérifie si la clé n'est pas DÉJÀ dans la bibliothèque d'un joueur
         $stmtCheck = $pdo->prepare("SELECT * FROM bibliotheque WHERE cle_cd = ?");
         $stmtCheck->execute([$cle_saisie]);
-        
         if ($stmtCheck->fetch()) {
-            $message = "❌ Cette clé a déjà été activée !";
+            $message      = "❌ Cette clé a déjà été activée.";
             $type_message = "#ff4757";
         } else {
-            // C'est tout bon ! On l'ajoute à la bibliothèque de ce client
-            $stmtInsert = $pdo->prepare("INSERT INTO bibliotheque (id_user, id_jeu, cle_cd) VALUES (?, ?, ?)");
-            $stmtInsert->execute([$_SESSION['user_id'], $jeu_concerne['id_jeu'], $cle_saisie]);
-            $message = "✅ Jeu activé avec succès ! Il est maintenant dans votre bibliothèque.";
+            $pdo->prepare("INSERT INTO bibliotheque (id_user, id_jeu, cle_cd) VALUES (?, ?, ?)")
+                ->execute([$_SESSION['user_id'], $jeu_concerne['id_jeu'], $cle_saisie]);
+            $message      = "✅ Jeu activé avec succès ! Il est maintenant dans votre bibliothèque.";
             $type_message = "#2ecc71";
         }
     } else {
-        $message = "❌ Clé CD invalide ou introuvable.";
+        $message      = "❌ Clé CD invalide ou introuvable.";
         $type_message = "#ff4757";
     }
 }
 
-// --- 2. RÉCUPÉRER LES JEUX ACTIVÉS PAR LE CLIENT ---
 $stmtBiblio = $pdo->prepare("
     SELECT j.titre, j.image, c.nom_cat, b.date_activation 
     FROM bibliotheque b 
@@ -60,10 +53,7 @@ $mes_jeux = $stmtBiblio->fetchAll();
 </head>
 <body style="background: #0b0c10; color: white; font-family: 'Rajdhani', sans-serif;">
 
-    <nav style="padding: 20px; background: #1a1c24; display: flex; justify-content: space-between;">
-        <a href="index.php" style="color: #3498db; text-decoration: none; font-weight: bold;">← RETOUR À L'ACCUEIL</a>
-        <span>👤 <?php echo $_SESSION['pseudo']; ?></span>
-    </nav>
+    <?php include 'navbar.php'; ?>
 
     <div class="container" style="padding: 40px; max-width: 1000px; margin: auto;">
         
@@ -101,5 +91,7 @@ $mes_jeux = $stmtBiblio->fetchAll();
         <?php endif; ?>
 
     </div>
+
+    <?php include 'footer.php'; ?>
 </body>
 </html>

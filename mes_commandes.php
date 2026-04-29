@@ -4,7 +4,6 @@ require 'db.php';
 
 if (!isset($_SESSION['user_id'])) { header('Location: connexion.php'); exit(); }
 
-// On récupère TOUTES les commandes et les jeux de l'utilisateur
 $stmt = $pdo->prepare("
     SELECT c.id_commande, c.date_achat, c.prix_total, j.titre, j.image, co.cle_cd 
     FROM commande c 
@@ -45,13 +44,7 @@ foreach ($resultats as $row) {
 </head>
 <body style="background: #0b0c10; color: white; font-family: 'Rajdhani', sans-serif;">
 
-    <nav style="padding: 20px; background: #1a1c24; display: flex; justify-content: space-between;">
-        <a href="index.php" style="color: #3498db; text-decoration: none; font-weight: bold;">← RETOUR À L'ACCUEIL</a>
-        <div style="display: flex; gap: 20px;">
-            <a href="bibliotheque.php" style="color: #2ecc71; text-decoration: none; font-weight: bold;">📚 Ma Bibliothèque</a>
-            <span>👤 <?php echo $_SESSION['pseudo']; ?></span>
-        </div>
-    </nav>
+    <?php include 'navbar.php'; ?>
 
     <div class="container" style="padding: 40px; max-width: 900px; margin: auto;">
         <h1 style="border-bottom: 2px solid #3498db; padding-bottom: 10px;">📦 Historique de mes commandes</h1>
@@ -74,6 +67,12 @@ foreach ($resultats as $row) {
                         <div>
                             <span style="color: #b3b3b3; font-size: 14px;">N° DE COMMANDE</span><br>
                             <strong>#<?php echo $id_cmd; ?></strong>
+                        </div>
+                        <div>
+                            <a href="facture.php?id=<?php echo $id_cmd; ?>" target="_blank"
+                               style="background:#0055cc; color:white; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:700; font-size:14px;">
+                                🧾 Facture
+                            </a>
                         </div>
                     </div>
 
@@ -98,5 +97,7 @@ foreach ($resultats as $row) {
             <?php endforeach; ?>
         <?php endif; ?>
     </div>
+
+    <?php include 'footer.php'; ?>
 </body>
 </html>

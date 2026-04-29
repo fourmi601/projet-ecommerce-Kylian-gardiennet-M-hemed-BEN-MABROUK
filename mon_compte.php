@@ -2,7 +2,6 @@
 session_start();
 require 'db.php';
 
-// Sécurité : Impossible d'accéder si on n'est pas connecté
 if (!isset($_SESSION['user_id'])) {
     header('Location: connexion.php');
     exit();
@@ -12,18 +11,13 @@ $id_user = $_SESSION['user_id'];
 $message = '';
 $type_message = '';
 
-// On récupère les infos actuelles du client depuis la base
 $stmt = $pdo->prepare("SELECT email, password, role FROM utilisateur WHERE id_user = ?");
 $stmt->execute([$id_user]);
 $user = $stmt->fetch();
 
-// --- TRAITEMENT DES FORMULAIRES ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    
-    // 1. Changement d'E-mail
     if (isset($_POST['update_email'])) {
         $nouvel_email = $_POST['email'];
-        // On vérifie si l'email n'est pas déjà pris par quelqu'un d'autre
         $check = $pdo->prepare("SELECT id_user FROM utilisateur WHERE email = ? AND id_user != ?");
         $check->execute([$nouvel_email, $id_user]);
         
@@ -32,24 +26,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $type_message = "#ff4757";
         } else {
             $pdo->prepare("UPDATE utilisateur SET email = ? WHERE id_user = ?")->execute([$nouvel_email, $id_user]);
-            $user['email'] = $nouvel_email; // Mise à jour de l'affichage en direct
+            $user['email'] = $nouvel_email;
             $message = "✅ Adresse e-mail mise à jour avec succès !";
             $type_message = "#2ecc71";
         }
     }
 
-    // 2. Changement de Mot de Passe
     if (isset($_POST['update_password'])) {
         $ancien_mdp = $_POST['ancien_mdp'];
         $nouveau_mdp = $_POST['nouveau_mdp'];
 
-        // On vérifie que l'ancien mot de passe tapé correspond bien à celui de la base de données
-        if ($ancien_mdp !== $user['password']) {
+        if (!password_verify($ancien_mdp, $user['password'])) {
             $message = "❌ L'ancien mot de passe est incorrect.";
             $type_message = "#ff4757";
+        } elseif (strlen($nouveau_mdp) < 6) {
+            $message = "❌ Le nouveau mot de passe doit contenir au moins 6 caractères.";
+            $type_message = "#ff4757";
         } else {
-            $pdo->prepare("UPDATE utilisateur SET password = ? WHERE id_user = ?")->execute([$nouveau_mdp, $id_user]);
-            $user['password'] = $nouveau_mdp; 
+            $hash = password_hash($nouveau_mdp, PASSWORD_DEFAULT);
+            $pdo->prepare("UPDATE utilisateur SET password = ? WHERE id_user = ?")->execute([$hash, $id_user]);
+            $user['password'] = $hash;
             $message = "✅ Mot de passe modifié avec succès !";
             $type_message = "#2ecc71";
         }
@@ -65,12 +61,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
 </head>
-<body style="background: #0b0c10; color: white; font-family: 'Rajdhani', sans-serif;">
+<body>
 
-    <nav style="padding: 20px; background: #1a1c24; display: flex; justify-content: space-between;">
-        <a href="index.php" style="color: #3498db; text-decoration: none; font-weight: bold;">← RETOUR À L'ACCUEIL</a>
-        <span>Connecté en tant que : <strong><?php echo $_SESSION['pseudo']; ?></strong> (<?php echo strtoupper($user['role']); ?>)</span>
-    </nav>
+    <?php include 'navbar.php'; ?>
 
     <div class="container" style="padding: 40px; max-width: 1000px; margin: auto;">
         <h1 style="border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 30px;">⚙️ Paramètres du compte</h1>
@@ -153,5 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         </div>
     </div>
+
+    <?php include 'footer.php'; ?>
 </body>
 </html>

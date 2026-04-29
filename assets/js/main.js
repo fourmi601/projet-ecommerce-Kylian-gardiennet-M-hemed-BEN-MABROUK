@@ -1,24 +1,15 @@
-// TOGGLE CLAIR / SOMBRE
-const btnToggle = document.getElementById('theme-toggle');
-const body = document.body;
+// Applique le thème avant que la page s'affiche (anti-flash).
+// Le toggle lui-même est géré dans navbar.php pour éviter les doublons.
+(function () {
+    var saved       = localStorage.getItem('theme');
+    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var useLight    = saved ? saved === 'light' : !prefersDark;
 
-// save s ou c
-if (localStorage.getItem('theme') === 'light') {
-    body.classList.add('light-theme');
-    if (btnToggle) btnToggle.textContent = 'Mode Sombre';
-}
-
-if (btnToggle) {
-    btnToggle.addEventListener('click', () => {
-        body.classList.toggle('light-theme');
-
-        if (body.classList.contains('light-theme')) {
-            localStorage.setItem('theme', 'light');
-            btnToggle.textContent = 'Mode Sombre';
-        } else {
-            localStorage.setItem('theme', 'dark');
-            btnToggle.textContent = 'Mode Clair';
-        }
-    });
-}
-
+    if (useLight) {
+        document.documentElement.classList.add('light-theme');
+        // body pas encore dispo ici, on le fait dès qu'il existe
+        document.addEventListener('DOMContentLoaded', function () {
+            document.body.classList.add('light-theme');
+        });
+    }
+})();

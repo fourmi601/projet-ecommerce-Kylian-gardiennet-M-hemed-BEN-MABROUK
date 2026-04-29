@@ -1,4 +1,5 @@
 <?php
+// page jeu : infos + avis + bouton achat/préco selon date_sortie
 session_start();
 require 'db.php';
 
@@ -9,8 +10,6 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 
 $id_jeu = (int)$_GET['id'];
 
-// On récupère le jeu
-// On récupère le jeu ET les infos du vendeur s'il y en a un
 $stmt = $pdo->prepare("
     SELECT j.*, c.nom_cat, u.pseudo AS nom_vendeur 
     FROM jeu j 
@@ -26,7 +25,6 @@ if (!$jeu) {
     exit();
 }
 
-// Vérifier si le jeu est en wishlist pour cet utilisateur
 $est_en_wishlist = false;
 if (isset($_SESSION['user_id'])) {
     $checkW = $pdo->prepare("SELECT id_jeu FROM wishlist WHERE id_user = ? AND id_jeu = ?");
@@ -36,14 +34,12 @@ if (isset($_SESSION['user_id'])) {
     }
 }
 
-// LOGIQUE DE PRÉCOMMANDE
 $est_precommande = false;
 $date_actuelle = date('Y-m-d H:i:s');
 if (!empty($jeu['date_sortie']) && $jeu['date_sortie'] > $date_actuelle) {
     $est_precommande = true;
 }
 
-// TRADUCTION NOTE STEAM
 $steam_pourcentage = $jeu['note_steam'];
 
 if ($steam_pourcentage === null || $steam_pourcentage == 0) {
@@ -70,9 +66,8 @@ if ($steam_pourcentage === null || $steam_pourcentage == 0) {
     $steam_couleur = '#a34c25';
 }
 
-// Gestion de l'avis client
 $message_avis = '';
-if (isset($_POST['submit_avis']) && isset($_SESSION['user_id'])) {
+if (isset($_POST['submit_avis']) && isset($_SESSION['user_id']) && !$est_precommande) {
     $note = (float)$_POST['note'];
     $commentaire = trim($_POST['commentaire']);
     
@@ -89,7 +84,6 @@ if (isset($_POST['submit_avis']) && isset($_SESSION['user_id'])) {
     }
 }
 
-// On récupère les avis
 $stmtAvis = $pdo->prepare("SELECT a.*, u.pseudo FROM avis a JOIN utilisateur u ON a.id_user = u.id_user WHERE a.id_jeu = ? ORDER BY a.date_avis DESC");
 $stmtAvis->execute([$id_jeu]);
 $les_avis = $stmtAvis->fetchAll();
@@ -118,7 +112,7 @@ if (count($les_avis) > 0) {
         .time-label { font-size: 11px; color: #b3b3b3; text-transform: uppercase; }
     </style>
 </head>
-<body style="background: #0b0c10; color: white; font-family: 'Rajdhani', sans-serif;">
+<body>
 
     <?php include 'navbar.php'; ?>
 
@@ -203,10 +197,11 @@ if (count($les_avis) > 0) {
                     
                     <div style="display: flex; align-items: center; gap: 20px;">
                         
-                        <?php if ($jeu['prix'] > 0): // SI LE JEU A UN PRIX ?>
-                            <span style="font-size: 36px; font-weight: bold; color: #2ecc71;">
-                                <?php echo number_format($jeu['prix_solde'] > 0 ? $jeu['prix_solde'] : $jeu['prix'], 2); ?> €
-                            </span>
+                        <?php if ($jeu['prix'] > 0): ?>
+                            <span style="font-size:36px; font-weight:bold; color:#2ecc71; white-space:nowrap;"><?php
+                                $prix_affiche = $jeu['prix_solde'] > 0 ? $jeu['prix_solde'] : $jeu['prix'];
+                                echo number_format($prix_affiche, 2, ',', ' ') . ' €';
+                            ?></span>
                             
                             <div style="display: flex; gap: 10px;">
                                 <?php if(isset($_SESSION['user_id'])): ?>
@@ -220,7 +215,7 @@ if (count($les_avis) > 0) {
                                 </a>
                             </div>
 
-                        <?php else: // SI LE JEU EST A 0€ ?>
+                        <?php else: ?>
                             <div style="display: flex; gap: 10px; align-items: center;">
                                 <?php if(isset($_SESSION['user_id'])): ?>
                                     <a href="ajouter_wishlist.php?id_jeu=<?php echo $jeu['id_jeu']; ?>" style="background: #2a2c35; border: 1px solid <?php echo $est_en_wishlist ? '#ff4757' : '#333'; ?>; color: <?php echo $est_en_wishlist ? '#ff4757' : 'white'; ?>; padding: 15px; border-radius: 6px; text-decoration: none; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: 0.2s;" title="Wishlist">
@@ -244,7 +239,7 @@ if (count($les_avis) > 0) {
             <div style="flex: 2; min-width: 300px;">
                 <h2 style="font-size: 24px; margin-bottom: 20px; border-left: 5px solid #3498db; padding-left: 15px;">Avis de la communauté (<?php echo count($les_avis); ?>)</h2>
                 <?php if (empty($les_avis)): ?>
-                    <p style=\"color: #b3b3b3; background: #1a1c24; padding: 20px; border-radius: 8px;\">Aucun avis pour le moment.</p>
+                    <p style="color: #b3b3b3; background: #1a1c24; padding: 20px; border-radius: 8px;">Aucun avis pour le moment.</p>
                 <?php else: ?>
                     <?php foreach ($les_avis as $avis): ?>
                         <div style="background: #1a1c24; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #2a2c35;">
@@ -266,23 +261,30 @@ if (count($les_avis) > 0) {
                 <div style="background: #1a1c24; padding: 25px; border-radius: 8px; border: 1px solid #2a2c35; position: sticky; top: 20px;">
                     <h3>Publier un avis</h3>
                     <?php echo $message_avis; ?>
-                    <?php if (isset($_SESSION['user_id'])): ?>
-                        <form action="jeu.php?id=<?php echo $id_jeu; ?>" method="POST" style="display: flex; flex-direction: column; gap: 15px;">
-                            <select name="note" required style="padding: 10px; background: #0b0c10; border: 1px solid #333; color: white;">
-                                <option value="5">5/5 - Parfait</option>
-                                <option value="4.5">4.5/5 - Excellent</option>
-                                <option value="4">4/5 - Très bon</option>
-                                <option value="3.5">3.5/5 - Bon</option>
-                                <option value="3">3/5 - Moyen</option>
-                                <option value="2">2/5 - Décevant</option>
-                                <option value="1">1/5 - Mauvais</option>
+
+                    <?php if ($est_precommande): ?>
+                        <div style="background:#f39c1215; border:1px solid #f39c12; border-radius:6px; padding:14px 16px; text-align:center; color:#f39c12; font-size:14px;">
+                            ⏳ Les avis seront disponibles après la sortie du jeu le <strong><?php echo date('d/m/Y', strtotime($jeu['date_sortie'])); ?></strong>.
+                        </div>
+
+                    <?php elseif (isset($_SESSION['user_id'])): ?>
+                        <form action="jeu.php?id=<?php echo $id_jeu; ?>" method="POST" style="display:flex; flex-direction:column; gap:15px;">
+                            <select name="note" required style="padding:10px; background:#0b0c10; border:1px solid #333; color:white; border-radius:4px;">
+                                <option value="5">5/5 — Parfait</option>
+                                <option value="4.5">4.5/5 — Excellent</option>
+                                <option value="4">4/5 — Très bon</option>
+                                <option value="3.5">3.5/5 — Bon</option>
+                                <option value="3">3/5 — Moyen</option>
+                                <option value="2">2/5 — Décevant</option>
+                                <option value="1">1/5 — Mauvais</option>
                             </select>
-                            <textarea name="commentaire" required rows="4" placeholder="Votre avis..." style="padding: 10px; background: #0b0c10; border: 1px solid #333; color: white;"></textarea>
-                            <button type="submit" name="submit_avis" style="background: #ff4757; color: white; padding: 12px; border: none; font-weight: bold; cursor: pointer;">ENVOYER</button>
+                            <textarea name="commentaire" required rows="4" placeholder="Votre avis..." style="padding:10px; background:#0b0c10; border:1px solid #333; color:white; border-radius:4px;"></textarea>
+                            <button type="submit" name="submit_avis" style="background:#ff4757; color:white; padding:12px; border:none; font-weight:bold; cursor:pointer; border-radius:4px;">ENVOYER</button>
                         </form>
+
                     <?php else: ?>
-                        <p style="color: #b3b3b3; font-size: 14px;">Connectez-vous pour donner votre avis.</p>
-                        <a href="connexion.php" style="display: block; text-align: center; background: #3498db; color: white; padding: 10px; text-decoration: none; font-weight: bold; border-radius: 4px;">SE CONNECTER</a>
+                        <p style="color:#b3b3b3; font-size:14px;">Connectez-vous pour donner votre avis.</p>
+                        <a href="connexion.php" style="display:block; text-align:center; background:#3498db; color:white; padding:10px; text-decoration:none; font-weight:bold; border-radius:4px;">SE CONNECTER</a>
                     <?php endif; ?>
                 </div>
             </div>
@@ -311,5 +313,7 @@ if (count($les_avis) > 0) {
         updateTimers();
     </script>
     <?php endif; ?>
+
+    <?php include 'footer.php'; ?>
 </body>
 </html>

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : 127.0.0.1
--- Généré le : ven. 17 avr. 2026 à 10:35
+-- Généré le : mer. 29 avr. 2026 à 14:57
 -- Version du serveur : 10.4.32-MariaDB
 -- Version de PHP : 8.2.12
 
@@ -56,6 +56,15 @@ CREATE TABLE `bibliotheque` (
   `cle_cd` varchar(20) NOT NULL,
   `date_activation` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `bibliotheque`
+--
+
+INSERT INTO `bibliotheque` (`id_user`, `id_jeu`, `cle_cd`, `date_activation`) VALUES
+(6, 10, '45B6-C37B-757D', '2026-04-17 19:40:27'),
+(6, 5, '8F27-BA5E-AB4A', '2026-04-27 10:01:20'),
+(6, 4, 'BDAE-0A6F-6AAD', '2026-04-17 19:34:42');
 
 -- --------------------------------------------------------
 
@@ -114,41 +123,46 @@ CREATE TABLE `commande` (
   `id_commande` int(11) NOT NULL,
   `date_achat` datetime DEFAULT NULL,
   `prix_total` decimal(10,2) DEFAULT NULL,
-  `id_user` int(11) NOT NULL
+  `id_user` int(11) NOT NULL,
+  `statut` varchar(20) NOT NULL DEFAULT 'payee'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `commande`
 --
 
-INSERT INTO `commande` (`id_commande`, `date_achat`, `prix_total`, `id_user`) VALUES
-(1, '2026-04-08 13:52:30', 29.99, 1),
-(2, '2026-04-08 13:54:31', 29.99, 1),
-(3, '2026-04-08 14:08:12', 29.99, 1),
-(4, '2026-04-08 14:34:23', 76.98, 1),
-(5, NULL, 34.99, 6),
-(6, NULL, 34.99, 6),
-(7, NULL, 34.99, 6),
-(8, NULL, 34.99, 6),
-(9, NULL, 34.99, 6),
-(10, NULL, 34.99, 6),
-(11, NULL, 34.99, 6),
-(12, NULL, 34.99, 6),
-(13, NULL, 34.99, 6),
-(14, NULL, 34.99, 6),
-(15, NULL, 34.99, 6),
-(16, '2026-04-12 19:20:27', 34.99, 6),
-(17, NULL, 20.00, 6),
-(18, '2026-04-12 19:29:20', 20.00, 6),
-(19, NULL, 29.99, 6),
-(20, '2026-04-12 19:29:55', 29.99, 6),
-(21, NULL, 41.99, 6),
-(22, '2026-04-12 19:30:13', 41.99, 6),
-(23, '2026-04-13 16:13:29', 64.98, 6),
-(24, '2026-04-13 16:58:31', 148.96, 6),
-(25, '2026-04-13 17:00:36', 148.96, 6),
-(26, '2026-04-13 17:04:23', 29.99, 6),
-(27, '2026-04-13 17:05:28', 41.99, 6);
+INSERT INTO `commande` (`id_commande`, `date_achat`, `prix_total`, `id_user`, `statut`) VALUES
+(1, '2026-04-08 13:52:30', 29.99, 1, 'payee'),
+(2, '2026-04-08 13:54:31', 29.99, 1, 'payee'),
+(3, '2026-04-08 14:08:12', 29.99, 1, 'payee'),
+(4, '2026-04-08 14:34:23', 76.98, 1, 'payee'),
+(5, NULL, 34.99, 6, 'payee'),
+(6, NULL, 34.99, 6, 'payee'),
+(7, NULL, 34.99, 6, 'payee'),
+(8, NULL, 34.99, 6, 'payee'),
+(9, NULL, 34.99, 6, 'payee'),
+(10, NULL, 34.99, 6, 'payee'),
+(11, NULL, 34.99, 6, 'payee'),
+(12, NULL, 34.99, 6, 'payee'),
+(13, NULL, 34.99, 6, 'payee'),
+(14, NULL, 34.99, 6, 'payee'),
+(15, NULL, 34.99, 6, 'payee'),
+(16, '2026-04-12 19:20:27', 34.99, 6, 'payee'),
+(17, NULL, 20.00, 6, 'payee'),
+(18, '2026-04-12 19:29:20', 20.00, 6, 'payee'),
+(19, NULL, 29.99, 6, 'payee'),
+(20, '2026-04-12 19:29:55', 29.99, 6, 'payee'),
+(21, NULL, 41.99, 6, 'payee'),
+(22, '2026-04-12 19:30:13', 41.99, 6, 'payee'),
+(23, '2026-04-13 16:13:29', 64.98, 6, 'payee'),
+(24, '2026-04-13 16:58:31', 148.96, 6, 'payee'),
+(25, '2026-04-13 17:00:36', 148.96, 6, 'payee'),
+(26, '2026-04-13 17:04:23', 29.99, 6, 'payee'),
+(27, '2026-04-13 17:05:28', 41.99, 6, 'payee'),
+(28, '2026-04-17 19:34:35', 20.00, 6, 'payee'),
+(29, '2026-04-17 19:39:59', 5.00, 8, 'payee'),
+(30, '2026-04-27 10:01:14', 69.99, 6, 'payee'),
+(31, '2026-04-29 11:06:30', 5.00, 8, 'payee');
 
 -- --------------------------------------------------------
 
@@ -182,7 +196,11 @@ INSERT INTO `contenir` (`id_jeu`, `id_commande`, `prix_achat`, `cle_cd`) VALUES
 (3, 20, 29.99, '31E6-EE8E-7375'),
 (3, 23, 29.99, 'C9A8-ABEB-0F1A'),
 (3, 26, 29.99, '0452-8D46-0C46'),
-(4, 18, 20.00, '7898-3E38-04E9');
+(4, 18, 20.00, '7898-3E38-04E9'),
+(4, 28, 20.00, 'BDAE-0A6F-6AAD'),
+(5, 30, 69.99, '8F27-BA5E-AB4A'),
+(10, 29, 5.00, '45B6-C37B-757D'),
+(10, 31, 5.00, '470E-CA77-55E2');
 
 -- --------------------------------------------------------
 
@@ -250,7 +268,8 @@ INSERT INTO `historique_ventes` (`id_vente`, `id_jeu`, `prix_paye`, `date_vente`
 (46, 6, 0.00, '2026-03-21 10:32:24'),
 (47, 6, 0.00, '2026-03-26 10:32:24'),
 (48, 6, 0.00, '2026-04-13 10:32:24'),
-(49, 7, 59.99, '2026-04-03 10:32:24');
+(49, 7, 59.99, '2026-04-03 10:32:24'),
+(50, 10, 5.00, '2026-04-29 11:06:30');
 
 -- --------------------------------------------------------
 
@@ -286,7 +305,9 @@ INSERT INTO `jeu` (`id_jeu`, `titre`, `description`, `prix`, `image`, `note`, `i
 (5, 'Crimson Desert', 'Crimson Desert est un jeu d\'action-aventure en monde ouvert sur le continent de Pywel. Accompagnez Kliff pour rebâtir les Crinières Grises et sauver ces terres d\'une menace grandissante. Des étendues sauvages aux ruines et au mystérieux Abysse, forgez votre voie entre combats et découvertes.', 69.99, 'steam_3321460.jpg', NULL, 4, NULL, 0.00, NULL, NULL, 3321460, 31),
 (6, 'Grand Theft Auto V Version originale', 'Grand Theft Auto V sur PC offre aux joueurs la possibilité d\'explorer le monde de Los Santos et Blaine County en haute résolution (jusqu\'à 4K) et à 60 images par seconde.', 0.00, 'steam_271590.jpg', NULL, 6, NULL, 0.00, NULL, NULL, 271590, 4),
 (7, 'PRAGMATA', 'Pragmata est un jeu d\'action-aventure de science-fiction développé par Capcom. Membre d\'une équipe envoyée sur la Lune, Hugh rencontre Diana, une jeune androïde. Ensemble, ils parcourront une station lunaire dirigée par une IA malfaisante, afin de trouver un moyen de retourner sur Terre.', 59.99, 'steam_3357650.jpg', NULL, 6, NULL, 0.00, '2026-04-17 12:00:00', NULL, 3357650, 1),
-(8, 'Little Nightmares VR: Altered Echoes', 'Little Nightmares VR: Altered Echoes est un jeu d\'énigme et d\'aventure dans lequel vous incarnez Dark Six, une mystérieuse silhouette de petite fille. Explorez un monde angoissant, résolvez des énigmes complexes et échappez à de terrifiants géants. Votre quête : redevenir vous-même.', 0.00, 'steam_2482940.jpg', NULL, 6, NULL, 0.00, '2026-04-23 00:00:00', NULL, 2482940, 0);
+(8, 'Little Nightmares VR: Altered Echoes', 'Little Nightmares VR: Altered Echoes est un jeu d\'énigme et d\'aventure dans lequel vous incarnez Dark Six, une mystérieuse silhouette de petite fille. Explorez un monde angoissant, résolvez des énigmes complexes et échappez à de terrifiants géants. Votre quête : redevenir vous-même.', 60.00, 'steam_2482940.jpg', NULL, 6, NULL, 0.00, '2026-04-23 00:00:00', NULL, 2482940, 0),
+(10, 'Metro 233', 'Pareil que le métro parisien', 5.00, 'apps.60273.68664808838028850.61879de5-57f5-44ac-8a94-ce9bb4234646.jpg', NULL, 1, 8, 0.00, NULL, NULL, NULL, 1),
+(11, 'Assassin\'s Creed Black Flag Resynced', 'Le légendaire jeu de pirate solo est de retour. Incarnez Edward Kenway et naviguez dans les Caraïbes pendant l\'âge d\'or de la piraterie dans ce remake enrichi, avec des graphismes à couper le souffle, un gameplay amélioré et de nouveaux contenus.', 59.99, 'steam_3751950.jpg', NULL, 6, 9, 0.00, '2026-07-09 00:00:00', NULL, 3751950, 0);
 
 -- --------------------------------------------------------
 
@@ -370,7 +391,9 @@ CREATE TABLE `utilisateur` (
 INSERT INTO `utilisateur` (`id_user`, `pseudo`, `email`, `password`, `role`) VALUES
 (1, 'Admin1', 'admin@digitalgames.fr', 'admin123', 'admin'),
 (6, 'kylian', 'kylian@test.test', '$2y$10$FjBBOmX7rF5ktLnWCD1.feWdEjy8SCHEySFjnOZGBAdm2F7zprXLe', 'client'),
-(7, 'admin', 'admin1@digitalgames.fr', '$2y$10$VEStpZVS48kWk4d4WqhrcOQ3E9FP4hrPBRHOeKF01XSvj0XdSh.Zu', 'admin');
+(7, 'admin', 'admin1@digitalgames.fr', '$2y$10$VEStpZVS48kWk4d4WqhrcOQ3E9FP4hrPBRHOeKF01XSvj0XdSh.Zu', 'admin'),
+(8, 'Vendeurtier1', 'tier1@test.test', '$2y$10$1f9jFwNk.k3sQStfxKDJh.eHoDXMP/eP5jSqBNHN2Ka9fKt6xDjru', 'tiers'),
+(9, 'ubisoft', 'ubisoft@test.test', '$2y$10$Pr9uVylh5SNznERk4WvXveT7faCH0rYB2GZGLR80Q2n27kwDdodh.', 'tiers');
 
 -- --------------------------------------------------------
 
@@ -391,7 +414,9 @@ CREATE TABLE `wishlist` (
 INSERT INTO `wishlist` (`id_user`, `id_jeu`, `date_ajout`) VALUES
 (1, 3, '2026-04-08 15:52:41'),
 (7, 2, '2026-04-15 15:46:06'),
-(7, 7, '2026-04-17 09:50:24');
+(7, 7, '2026-04-17 09:50:24'),
+(7, 8, '2026-04-29 10:30:09'),
+(9, 11, '2026-04-29 14:45:59');
 
 --
 -- Index pour les tables déchargées
@@ -506,19 +531,19 @@ ALTER TABLE `code_promo`
 -- AUTO_INCREMENT pour la table `commande`
 --
 ALTER TABLE `commande`
-  MODIFY `id_commande` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id_commande` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT pour la table `historique_ventes`
 --
 ALTER TABLE `historique_ventes`
-  MODIFY `id_vente` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
+  MODIFY `id_vente` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
 
 --
 -- AUTO_INCREMENT pour la table `jeu`
 --
 ALTER TABLE `jeu`
-  MODIFY `id_jeu` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id_jeu` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT pour la table `plateforme`
@@ -530,7 +555,7 @@ ALTER TABLE `plateforme`
 -- AUTO_INCREMENT pour la table `utilisateur`
 --
 ALTER TABLE `utilisateur`
-  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- Contraintes pour les tables déchargées

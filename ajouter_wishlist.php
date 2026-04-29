@@ -1,4 +1,6 @@
 <?php
+// Toggle wishlist : si le jeu y est déjà on l'enlève, sinon on l'ajoute.
+// Appelé directement depuis un lien <a href="ajouter_wishlist.php?id_jeu=X">
 session_start();
 require 'db.php';
 
@@ -21,6 +23,7 @@ if (isset($_GET['id_jeu'])) {
     }
 }
 
-header('Location: ' . $_SERVER['HTTP_REFERER']);
+$retour = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'catalogue.php';
+header('Location: ' . $retour);
 exit();
 ?>

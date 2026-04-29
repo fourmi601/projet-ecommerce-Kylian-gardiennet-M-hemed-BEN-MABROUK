@@ -1,35 +1,29 @@
 <?php
+// panier : $_SESSION['panier'] = [id_jeu => qté], total → $_SESSION['total_a_payer']
 session_start();
 require 'db.php';
 
-// --- GESTION DES ACTIONS ---
 if (isset($_GET['action']) && isset($_GET['id_jeu'])) {
     $id_cible = (int)$_GET['id_jeu'];
 
     if ($_GET['action'] === 'supprimer') {
         unset($_SESSION['panier'][$id_cible]);
-    }
-    elseif ($_GET['action'] === 'mettre_cote') {
+    } elseif ($_GET['action'] === 'mettre_cote') {
         unset($_SESSION['panier'][$id_cible]);
         if (isset($_SESSION['user_id'])) {
-            $stmt = $pdo->prepare("INSERT IGNORE INTO wishlist (id_user, id_jeu) VALUES (?, ?)");
-            $stmt->execute([$_SESSION['user_id'], $id_cible]);
+            $pdo->prepare("INSERT IGNORE INTO wishlist (id_user, id_jeu) VALUES (?, ?)")->execute([$_SESSION['user_id'], $id_cible]);
         } else {
             $_SESSION['wishlist'][$id_cible] = true;
         }
-    }
-    elseif ($_GET['action'] === 'ajouter_panier') {
-        $_SESSION['panier'][$id_cible] = 1; // On rajoute au panier
-        
-        // On le retire de la wishlist
+    } elseif ($_GET['action'] === 'ajouter_panier') {
+        $_SESSION['panier'][$id_cible] = 1;
         if (isset($_SESSION['user_id'])) {
-            $stmt = $pdo->prepare("DELETE FROM wishlist WHERE id_user = ? AND id_jeu = ?");
-            $stmt->execute([$_SESSION['user_id'], $id_cible]);
+            $pdo->prepare("DELETE FROM wishlist WHERE id_user = ? AND id_jeu = ?")->execute([$_SESSION['user_id'], $id_cible]);
         } else {
             unset($_SESSION['wishlist'][$id_cible]);
         }
     }
-    
+
     header('Location: panier.php');
     exit();
 }
@@ -103,19 +97,8 @@ $_SESSION['total_a_payer'] = $total;
     <link rel="stylesheet" href="assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
 </head>
-<body style="background: #0b0c10; color: white; font-family: 'Rajdhani', sans-serif;">
-    <nav>
-        <div class="logo-container"><a href="index.php"><img src="assets/img/logo.jpg" alt="Logo" class="site-logo"></a></div>
-        <div class="nav-links"><a href="index.php">Accueil</a> <a href="contact.php">Contact</a></div>
-        <div class="user-actions">
-            <?php if (isset($_SESSION['user_id'])): ?>
-                <a href="#" class="active">👤 <?php echo htmlspecialchars($_SESSION['pseudo']); ?></a>
-                <a href="deconnexion.php" style="color: #ff4757; margin-left: 15px;">Déconnexion</a>
-            <?php else: ?>
-                <a href="connexion.php" class="active">👤 Connexion</a>
-            <?php endif; ?>
-        </div>
-    </nav>
+<body>
+    <?php include 'navbar.php'; ?>
 
     <div class="container" style="max-width: 1200px; margin: 40px auto; padding: 0 20px;">
         <h2 style="font-size: 32px; margin-bottom: 30px; border-left: 5px solid #ff4757; padding-left: 15px;">Mon Panier</h2>
@@ -199,5 +182,7 @@ $_SESSION['total_a_payer'] = $total;
         <?php endif; ?>
 
     </div>
+
+    <?php include 'footer.php'; ?>
 </body>
 </html>
