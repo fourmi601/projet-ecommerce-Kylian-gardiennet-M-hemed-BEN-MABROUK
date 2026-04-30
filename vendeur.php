@@ -90,10 +90,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $date_sortie = !empty($_POST['date_sortie']) ? $_POST['date_sortie'] : null;
         $image_name  = $_POST['old_image'] ?? 'default.jpg';
 
-        if (!empty($_FILES['image']['name'])) {
+        if (!empty($_FILES['image']['name']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+            $ext_autorisees = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg',
+                               'png' => 'image/png', 'webp' => 'image/webp'];
             $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
-            $allowed = ['jpg','jpeg','png','webp'];
-            if (in_array($ext, $allowed)) {
+            $mime_reel = (new finfo(FILEINFO_MIME_TYPE))->file($_FILES['image']['tmp_name']);
+            if (isset($ext_autorisees[$ext])
+                && $ext_autorisees[$ext] === $mime_reel
+                && $_FILES['image']['size'] <= 5 * 1024 * 1024) {
                 $image_name = uniqid('jeu_') . '.' . $ext;
                 move_uploaded_file($_FILES['image']['tmp_name'], 'assets/img/' . $image_name);
             }

@@ -1,5 +1,6 @@
 <?php
 // inscription : 1) API Ecotech → 2) insert BDD locale
+require_once 'security.php';
 session_start();
 require 'db.php';
 require_once 'marchands-config.php';

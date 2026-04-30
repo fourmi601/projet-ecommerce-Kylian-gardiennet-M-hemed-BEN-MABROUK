@@ -1,4 +1,6 @@
 <?php
+// ajoute un jeu au panier session, puis redirige sur la page d'origine
+require_once 'security.php';
 session_start();
 
 if (!isset($_SESSION['panier'])) {
@@ -12,6 +14,7 @@ if (isset($_GET['id_jeu'])) {
     }
 }
 
-$retour = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'catalogue.php';
+// safe_redirect : n'accepte que les URLs du même domaine (anti open redirect)
+$retour = safe_redirect($_SERVER['HTTP_REFERER'] ?? '', 'catalogue.php');
 header('Location: ' . $retour);
 exit();

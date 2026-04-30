@@ -8,22 +8,38 @@ $message = '';
 $type_message = '';
 
 if (isset($_POST['activer'])) {
-    $cle_saisie   = trim($_POST['cle_cd']);
-    $stmt         = $pdo->prepare("SELECT id_jeu FROM contenir WHERE cle_cd = ?");
+    $cle_saisie = trim($_POST['cle_cd']);
+
+    // On récupère l'id_jeu ET la date de sortie pour vérifier si la précommande est activable
+    $stmt = $pdo->prepare("
+        SELECT co.id_jeu, j.date_sortie, j.titre
+        FROM contenir co
+        JOIN jeu j ON j.id_jeu = co.id_jeu
+        WHERE co.cle_cd = ?
+    ");
     $stmt->execute([$cle_saisie]);
     $jeu_concerne = $stmt->fetch();
 
     if ($jeu_concerne) {
-        $stmtCheck = $pdo->prepare("SELECT * FROM bibliotheque WHERE cle_cd = ?");
-        $stmtCheck->execute([$cle_saisie]);
-        if ($stmtCheck->fetch()) {
-            $message      = "❌ Cette clé a déjà été activée.";
-            $type_message = "#ff4757";
+        $maintenant = date('Y-m-d H:i:s');
+
+        // Bloquer si le jeu est une précommande et pas encore sorti
+        if (!empty($jeu_concerne['date_sortie']) && $jeu_concerne['date_sortie'] > $maintenant) {
+            $date_affichee = date('d/m/Y à H\hi', strtotime($jeu_concerne['date_sortie']));
+            $message       = "⏳ Ce jeu (\"" . htmlspecialchars($jeu_concerne['titre']) . "\") sort le <strong style='color:#f39c12;'>{$date_affichee}</strong>. L'activation sera possible à partir de cette date.";
+            $type_message  = "#f39c12";
         } else {
-            $pdo->prepare("INSERT INTO bibliotheque (id_user, id_jeu, cle_cd) VALUES (?, ?, ?)")
-                ->execute([$_SESSION['user_id'], $jeu_concerne['id_jeu'], $cle_saisie]);
-            $message      = "✅ Jeu activé avec succès ! Il est maintenant dans votre bibliothèque.";
-            $type_message = "#2ecc71";
+            $stmtCheck = $pdo->prepare("SELECT * FROM bibliotheque WHERE cle_cd = ?");
+            $stmtCheck->execute([$cle_saisie]);
+            if ($stmtCheck->fetch()) {
+                $message      = "❌ Cette clé a déjà été activée.";
+                $type_message = "#ff4757";
+            } else {
+                $pdo->prepare("INSERT INTO bibliotheque (id_user, id_jeu, cle_cd) VALUES (?, ?, ?)")
+                    ->execute([$_SESSION['user_id'], $jeu_concerne['id_jeu'], $cle_saisie]);
+                $message      = "✅ Jeu activé avec succès ! Il est maintenant dans votre bibliothèque.";
+                $type_message = "#2ecc71";
+            }
         }
     } else {
         $message      = "❌ Clé CD invalide ou introuvable.";

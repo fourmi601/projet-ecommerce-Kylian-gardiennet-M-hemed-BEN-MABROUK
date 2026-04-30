@@ -1,5 +1,6 @@
 <?php
 // page jeu : infos + avis + bouton achat/préco selon date_sortie
+require_once 'security.php';
 session_start();
 require 'db.php';
 
@@ -67,7 +68,7 @@ if ($steam_pourcentage === null || $steam_pourcentage == 0) {
 }
 
 $message_avis = '';
-if (isset($_POST['submit_avis']) && isset($_SESSION['user_id']) && !$est_precommande) {
+if (isset($_POST['submit_avis']) && isset($_SESSION['user_id']) && !$est_precommande && csrf_verify()) {
     $note = (float)$_POST['note'];
     $commentaire = trim($_POST['commentaire']);
     
@@ -269,6 +270,7 @@ if (count($les_avis) > 0) {
 
                     <?php elseif (isset($_SESSION['user_id'])): ?>
                         <form action="jeu.php?id=<?php echo $id_jeu; ?>" method="POST" style="display:flex; flex-direction:column; gap:15px;">
+                            <?php echo csrf_field(); ?>
                             <select name="note" required style="padding:10px; background:#0b0c10; border:1px solid #333; color:white; border-radius:4px;">
                                 <option value="5">5/5 — Parfait</option>
                                 <option value="4.5">4.5/5 — Excellent</option>

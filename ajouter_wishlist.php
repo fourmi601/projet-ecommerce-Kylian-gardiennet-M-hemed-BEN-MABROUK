@@ -1,6 +1,6 @@
 <?php
-// Toggle wishlist : si le jeu y est déjà on l'enlève, sinon on l'ajoute.
-// Appelé directement depuis un lien <a href="ajouter_wishlist.php?id_jeu=X">
+// toggle wishlist → vérifie le referer pour éviter un open redirect
+require_once 'security.php';
 session_start();
 require 'db.php';
 
@@ -23,7 +23,8 @@ if (isset($_GET['id_jeu'])) {
     }
 }
 
-$retour = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'catalogue.php';
+// safe_redirect valide que l'URL appartient au même domaine (anti open redirect)
+$retour = safe_redirect($_SERVER['HTTP_REFERER'] ?? '', 'catalogue.php');
 header('Location: ' . $retour);
 exit();
 ?>

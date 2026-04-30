@@ -38,22 +38,33 @@ try {
 
     $ids = array_keys($_SESSION['panier']);
     $placeholders = str_repeat('?,', count($ids) - 1) . '?';
-    $jeux = $pdo->prepare("SELECT id_jeu, titre, image, prix FROM jeu WHERE id_jeu IN ($placeholders)");
+    // On récupère aussi date_sortie pour savoir si c'est une précommande
+    $jeux = $pdo->prepare("SELECT id_jeu, titre, image, prix, prix_solde, date_sortie FROM jeu WHERE id_jeu IN ($placeholders)");
     $jeux->execute($ids);
     
     $stmtContenir = $pdo->prepare("INSERT INTO contenir (id_jeu, id_commande, prix_achat, cle_cd) VALUES (?, ?, ?, ?)");
     $stmtHisto    = $pdo->prepare("INSERT INTO historique_ventes (id_jeu, prix_paye, date_vente) VALUES (?, ?, NOW())");
     $stmtVentes   = $pdo->prepare("UPDATE jeu SET ventes = ventes + 1 WHERE id_jeu = ?");
 
+    $now = date('Y-m-d H:i:s');
     foreach ($jeux->fetchAll() as $jeu) {
         $quantite = $_SESSION['panier'][$jeu['id_jeu']];
+        // La clé est générée maintenant, mais masquée si le jeu n'est pas encore sorti
+        $est_precommande = !empty($jeu['date_sortie']) && $jeu['date_sortie'] > $now;
         for ($i = 0; $i < $quantite; $i++) {
             $cle_unique = genererCleCD();
-            $prix_final = $jeu['prix'];
+            // Prix soldé si applicable
+            $prix_final = ($jeu['prix_solde'] > 0) ? $jeu['prix_solde'] : $jeu['prix'];
             $stmtContenir->execute([$jeu['id_jeu'], $id_commande, $prix_final, $cle_unique]);
             $stmtHisto->execute([$jeu['id_jeu'], $prix_final]);
             $stmtVentes->execute([$jeu['id_jeu']]);
-            $cles_generees[] = ['titre' => $jeu['titre'], 'image' => $jeu['image'], 'cle' => $cle_unique];
+            $cles_generees[] = [
+                'titre'          => $jeu['titre'],
+                'image'          => $jeu['image'],
+                'cle'            => $cle_unique,
+                'est_precommande'=> $est_precommande,
+                'date_sortie'    => $jeu['date_sortie'],
+            ];
         }
     }
 
@@ -89,19 +100,31 @@ try {
             Réf. transaction : <?php echo substr(htmlspecialchars($token_banque), 0, 8); ?>****
         </p>
 
-        <p style="text-align: center; color: #b3b3b3;">Cliquez sur la zone floutée pour révéler et copier votre clé CD.</p>
+        <p style="text-align:center; color:#b3b3b3; margin-bottom:6px;">Cliquez sur la zone floutée pour révéler et copier votre clé CD.</p>
+        <p style="text-align:center; color:#9aa0b4; font-size:13px; margin-bottom:20px;">
+            Pour les précommandes : la clé est disponible maintenant, mais l'activation dans la bibliothèque sera débloquée le jour de la sortie.
+        </p>
 
-        <div style="margin-top: 40px;">
+        <div style="margin-top:10px;">
             <?php foreach($cles_generees as $item): ?>
-                <div style="display: flex; align-items: center; background: #0f1014; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #333;">
-                    <img src="assets/img/<?php echo $item['image']; ?>" style="width: 50px; height: 70px; object-fit: cover; border-radius: 4px; margin-right: 20px;">
-                    <div style="flex: 1;">
-                        <h3 style="margin: 0; font-size: 20px;"><?php echo htmlspecialchars($item['titre']); ?></h3>
+                <div style="display:flex; align-items:center; background:#0f1014; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid <?php echo $item['est_precommande'] ? '#f39c12' : '#333'; ?>;">
+                    <img src="assets/img/<?php echo htmlspecialchars($item['image']); ?>"
+                         style="width:50px; height:70px; object-fit:cover; border-radius:4px; margin-right:20px;">
+                    <div style="flex:1;">
+                        <h3 style="margin:0 0 5px; font-size:18px;"><?php echo htmlspecialchars($item['titre']); ?></h3>
+                        <?php if ($item['est_precommande']): ?>
+                            <span style="background:#f39c12; color:#1a1c24; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700;">
+                                PRÉCOMMANDE — sortie le <?php echo date('d/m/Y', strtotime($item['date_sortie'])); ?>
+                            </span>
+                        <?php endif; ?>
                     </div>
-                    <div style="background: #1a1c24; border: 1px dashed #666; padding: 10px 20px; border-radius: 4px; text-align: center;">
-                        <span style="font-size: 12px; color: #666; display: block;">CLÉ D'ACTIVATION</span>
-                        <strong class="cle-floutee" id="cle-<?php echo $item['cle']; ?>" onclick="copierCle('<?php echo $item['cle']; ?>', this)" style="font-size: 20px; letter-spacing: 2px;">
-                            <?php echo $item['cle']; ?>
+                    <!-- La clé s'affiche toujours, précommande ou non -->
+                    <div style="background:#1a1c24; border:1px dashed #666; padding:10px 20px; border-radius:4px; text-align:center;">
+                        <span style="font-size:12px; color:#666; display:block;">CLÉ D'ACTIVATION</span>
+                        <strong class="cle-floutee" id="cle-<?php echo htmlspecialchars($item['cle']); ?>"
+                                onclick="copierCle('<?php echo htmlspecialchars($item['cle']); ?>', this)"
+                                style="font-size:18px; letter-spacing:2px;">
+                            <?php echo htmlspecialchars($item['cle']); ?>
                         </strong>
                     </div>
                 </div>

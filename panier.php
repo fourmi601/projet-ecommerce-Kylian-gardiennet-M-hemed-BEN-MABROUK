@@ -6,7 +6,18 @@ require 'db.php';
 if (isset($_GET['action']) && isset($_GET['id_jeu'])) {
     $id_cible = (int)$_GET['id_jeu'];
 
-    if ($_GET['action'] === 'supprimer') {
+    if ($_GET['action'] === 'augmenter') {
+        if (isset($_SESSION['panier'][$id_cible])) {
+            $_SESSION['panier'][$id_cible]++;
+        }
+    } elseif ($_GET['action'] === 'diminuer') {
+        if (isset($_SESSION['panier'][$id_cible])) {
+            $_SESSION['panier'][$id_cible]--;
+            if ($_SESSION['panier'][$id_cible] <= 0) {
+                unset($_SESSION['panier'][$id_cible]);
+            }
+        }
+    } elseif ($_GET['action'] === 'supprimer') {
         unset($_SESSION['panier'][$id_cible]);
     } elseif ($_GET['action'] === 'mettre_cote') {
         unset($_SESSION['panier'][$id_cible]);
@@ -58,7 +69,9 @@ if (!empty($_SESSION['panier'])) {
     $stmt->execute($ids);
     $jeux_panier = $stmt->fetchAll();
     foreach ($jeux_panier as $jeu) {
-        $sous_total += $jeu['prix'] * $_SESSION['panier'][$jeu['id_jeu']];
+        // Si le jeu est en solde, on prend le prix soldé
+        $prix_effectif = ($jeu['prix_solde'] > 0) ? $jeu['prix_solde'] : $jeu['prix'];
+        $sous_total += $prix_effectif * $_SESSION['panier'][$jeu['id_jeu']];
     }
 }
 
@@ -113,18 +126,39 @@ $_SESSION['total_a_payer'] = $total;
                     </div>
                 <?php else: ?>
                     <?php foreach ($jeux_panier as $jeu): $qte = $_SESSION['panier'][$jeu['id_jeu']]; ?>
-                        <div style="background: #1a1c24; border: 1px solid #2a2c35; border-radius: 8px; padding: 20px; display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
-                            <img src="assets/img/<?php echo htmlspecialchars($jeu['image']); ?>" style="width: 70px; height: 90px; object-fit: cover; border-radius: 4px;">
-                            <div style="flex: 1;">
-                                <h3 style="margin: 0; font-size: 20px;"><?php echo htmlspecialchars($jeu['titre']); ?></h3>
-                                <div style="display: flex; gap: 15px; margin-top: 10px;">
-                                    <a href="panier.php?action=mettre_cote&id_jeu=<?php echo $jeu['id_jeu']; ?>" style="color: #f1c40f; text-decoration: none; font-size: 14px;">⭐ Mettre de côté</a>
-                                    <a href="panier.php?action=supprimer&id_jeu=<?php echo $jeu['id_jeu']; ?>" style="color: #ff4757; text-decoration: none; font-size: 14px;">🗑️ Retirer</a>
+                        <div style="background:#1a1c24; border:1px solid #2a2c35; border-radius:8px; padding:18px 20px; display:flex; align-items:center; gap:18px; margin-bottom:16px;">
+                            <img src="assets/img/<?php echo htmlspecialchars($jeu['image']); ?>"
+                                 style="width:65px; height:85px; object-fit:cover; border-radius:5px; flex-shrink:0;">
+                            <div style="flex:1; min-width:0;">
+                                <h3 style="margin:0 0 8px; font-size:18px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                    <?php echo htmlspecialchars($jeu['titre']); ?>
+                                </h3>
+                                <div style="font-size:14px; color:#9aa0b4; margin-bottom:10px;">
+                                    <?php echo number_format($jeu['prix'], 2); ?> € / unité
+                                </div>
+                                <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                                    <!-- Boutons quantité -->
+                                    <div style="display:flex; align-items:center; gap:0; background:#0a0b0f; border:1px solid #333; border-radius:6px; overflow:hidden;">
+                                        <a href="panier.php?action=diminuer&id_jeu=<?php echo $jeu['id_jeu']; ?>"
+                                           style="padding:6px 14px; color:white; text-decoration:none; font-size:18px; font-weight:bold; transition:.15s;"
+                                           onmouseover="this.style.background='#ff4757'" onmouseout="this.style.background=''">−</a>
+                                        <span style="padding:6px 14px; font-size:16px; font-weight:700; border-left:1px solid #333; border-right:1px solid #333; min-width:36px; text-align:center;">
+                                            <?php echo $qte; ?>
+                                        </span>
+                                        <a href="panier.php?action=augmenter&id_jeu=<?php echo $jeu['id_jeu']; ?>"
+                                           style="padding:6px 14px; color:white; text-decoration:none; font-size:18px; font-weight:bold; transition:.15s;"
+                                           onmouseover="this.style.background='#2ecc71'" onmouseout="this.style.background=''">+</a>
+                                    </div>
+                                    <a href="panier.php?action=mettre_cote&id_jeu=<?php echo $jeu['id_jeu']; ?>"
+                                       style="color:#f1c40f; text-decoration:none; font-size:13px;">⭐ Mettre de côté</a>
+                                    <a href="panier.php?action=supprimer&id_jeu=<?php echo $jeu['id_jeu']; ?>"
+                                       style="color:#ff4757; text-decoration:none; font-size:13px;">🗑 Retirer</a>
                                 </div>
                             </div>
-                            <div style="text-align: right;">
-                                <div style="font-size: 20px; font-weight: bold; color: #2ecc71;"><?php echo number_format($jeu['prix'] * $qte, 2); ?> €</div>
-                                <div style="color: #666; font-size: 14px;">Qté: <?php echo $qte; ?></div>
+                            <div style="text-align:right; flex-shrink:0;">
+                                <div style="font-size:22px; font-weight:700; color:#2ecc71; white-space:nowrap;">
+                                    <?php echo number_format($jeu['prix'] * $qte, 2, ',', ' '); ?> €
+                                </div>
                             </div>
                         </div>
                     <?php endforeach; ?>

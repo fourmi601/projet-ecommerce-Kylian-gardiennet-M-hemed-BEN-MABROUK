@@ -4,7 +4,7 @@
 <footer class="site-footer">
     <div class="footer-container">
 
-        <!-- Colonne logo + description -->
+        <!-- Colonne logo + descr -->
         <div class="footer-col">
             <img src="assets/img/logo.jpg" alt="Digital Games" class="footer-logo">
             <p>Votre boutique de clés CD officielles.<br>

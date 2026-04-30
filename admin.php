@@ -1,5 +1,6 @@
 <?php
 // panel admin — import Steam, catalogue, promos, membres
+require_once 'security.php';
 session_start();
 require 'db.php';
 
@@ -96,9 +97,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id_steam = !empty($_POST['id_steam']) ? $_POST['id_steam'] : null;
         $date_sortie = !empty($_POST['date_sortie']) ? $_POST['date_sortie'] : null;
 
-        if (!empty($_FILES['image']['name'])) {
+        if (!empty($_FILES['image']['name']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+            $ext_autorisees = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg',
+                               'png' => 'image/png', 'webp' => 'image/webp', 'gif' => 'image/gif'];
             $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
-            if (in_array($ext, ['jpg','jpeg','png','webp','gif'])) {
+            // Vérifie le VRAI type MIME du fichier (pas juste l'extension)
+            $mime_reel = (new finfo(FILEINFO_MIME_TYPE))->file($_FILES['image']['tmp_name']);
+            // Taille max : 5 Mo
+            $taille_max = 5 * 1024 * 1024;
+            if (isset($ext_autorisees[$ext])
+                && $ext_autorisees[$ext] === $mime_reel
+                && $_FILES['image']['size'] <= $taille_max) {
                 $image_name = 'jeu_' . uniqid() . '.' . $ext;
                 move_uploaded_file($_FILES['image']['tmp_name'], 'assets/img/' . $image_name);
             }
@@ -533,39 +542,163 @@ if (isset($_GET['edit'])) {
             
         </div>
 
-        <section style="background: #1a1c24; padding: 25px; border-radius: 8px; border: 1px solid #2a2c35;">
-            <h2 style="margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px;">🎮 Inventaire Complet</h2>
-            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-                <tr style="border-bottom: 2px solid #333; color:#b3b3b3; text-align:left; font-size:14px;">
-                    <th style="padding-bottom:10px;">Jeu</th><th>Catégorie</th><th style="text-align:center;">Prix Actuel</th><th style="text-align:right;">Actions</th>
-                </tr>
-                <?php foreach($jeux as $j): ?>
-                <tr style="border-bottom: 1px solid #2a2c35;">
-                    <td style="padding:15px 0; font-weight:bold; display: flex; align-items: center; gap: 15px;">
-                        <img src="assets/img/<?php echo $j['image']; ?>" style="width: 40px; height: 50px; object-fit: cover; border-radius: 4px;">
-                        <?php echo htmlspecialchars($j['titre']); ?>
+        <section style="background:#13151e; border:1px solid #252836; border-radius:10px; padding:28px;">
+
+            <!-- En-tête inventaire avec compteur + recherche -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+                <h2 style="margin:0; font-size:20px;">
+                    🎮 Inventaire
+                    <span style="color:#9aa0b4; font-size:14px; font-weight:400; margin-left:8px;">(<?php echo count($jeux); ?> jeux)</span>
+                </h2>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <!-- Filtre par catégorie -->
+                    <select id="inv-cat" onchange="filtrerInventaire()"
+                            style="padding:8px 12px; background:#0a0b0f; border:1px solid #333; color:white; border-radius:6px; font-family:inherit; font-size:13px;">
+                        <option value="">Toutes les catégories</option>
+                        <?php foreach($categories as $cat): ?>
+                            <option value="<?php echo htmlspecialchars($cat['nom_cat']); ?>"><?php echo htmlspecialchars($cat['nom_cat']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <!-- Recherche par titre -->
+                    <input type="text" id="inv-search" placeholder="Rechercher un jeu..."
+                           oninput="filtrerInventaire()"
+                           style="padding:8px 14px; background:#0a0b0f; border:1px solid #333; color:white;
+                                  border-radius:6px; font-size:14px; width:220px; outline:none; font-family:inherit;">
+                </div>
+            </div>
+
+            <!-- Tableau inventaire -->
+            <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse;" id="inv-table">
+                <thead>
+                    <tr style="border-bottom:2px solid #252836; color:#9aa0b4; font-size:12px; text-transform:uppercase; letter-spacing:.07em;">
+                        <th style="padding:10px 12px; text-align:left; font-weight:600;">Jeu</th>
+                        <th style="padding:10px 12px; text-align:left; font-weight:600;">Catégorie</th>
+                        <th style="padding:10px 12px; text-align:center; font-weight:600;">Statut</th>
+                        <th style="padding:10px 12px; text-align:center; font-weight:600;">Prix</th>
+                        <th style="padding:10px 12px; text-align:center; font-weight:600;">Ventes</th>
+                        <th style="padding:10px 12px; text-align:right; font-weight:600;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php $now = date('Y-m-d H:i:s'); foreach($jeux as $j):
+                    $est_preco = !empty($j['date_sortie']) && $j['date_sortie'] > $now;
+                    $est_tiers = !empty($j['id_vendeur']);
+                    $search_data = strtolower($j['titre'] . ' ' . $j['nom_cat']);
+                ?>
+                <tr class="inv-row"
+                    data-search="<?php echo htmlspecialchars($search_data); ?>"
+                    data-cat="<?php echo htmlspecialchars($j['nom_cat']); ?>"
+                    style="border-bottom:1px solid #1e2130; transition:background .15s;"
+                    onmouseover="this.style.background='#0a0b0f0f'" onmouseout="this.style.background=''">
+
+                    <!-- Titre + image -->
+                    <td style="padding:14px 12px;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <img src="assets/img/<?php echo htmlspecialchars($j['image']); ?>"
+                                 style="width:38px; height:50px; object-fit:cover; border-radius:4px; flex-shrink:0;">
+                            <div>
+                                <div style="font-weight:700; font-size:14px; line-height:1.3;">
+                                    <?php echo htmlspecialchars($j['titre']); ?>
+                                </div>
+                                <?php if ($est_tiers): ?>
+                                    <span style="background:#f39c1222; color:#f39c12; font-size:10px; padding:2px 6px; border-radius:3px; font-weight:700;">TIERS</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                     </td>
-                    <td style="color:#3498db;"><?php echo htmlspecialchars($j['nom_cat']); ?></td>
-                    <td style="text-align:center;">
-                        <?php if($j['prix_solde'] > 0): ?>
-                            <span style="text-decoration:line-through; color:#ff4757; font-size:12px; margin-right:5px;"><?php echo $j['prix']; ?>€</span>
-                            <span style="color:#2ecc71; font-weight:bold; font-size:18px;"><?php echo $j['prix_solde']; ?>€</span>
+
+                    <!-- Catégorie -->
+                    <td style="padding:14px 12px;">
+                        <span style="background:#0055cc22; color:#60a5fa; padding:3px 9px; border-radius:4px; font-size:12px; font-weight:600;">
+                            <?php echo htmlspecialchars($j['nom_cat']); ?>
+                        </span>
+                    </td>
+
+                    <!-- Statut -->
+                    <td style="padding:14px 12px; text-align:center;">
+                        <?php if ($est_preco): ?>
+                            <span style="background:#f39c1222; color:#f39c12; padding:3px 9px; border-radius:4px; font-size:11px; font-weight:700; white-space:nowrap;">
+                                ⏳ <?php echo date('d/m/Y', strtotime($j['date_sortie'])); ?>
+                            </span>
                         <?php else: ?>
-                            <span style="font-weight:bold; font-size:16px;"><?php echo $j['prix']; ?>€</span>
+                            <span style="background:#2ecc7122; color:#2ecc71; padding:3px 9px; border-radius:4px; font-size:11px; font-weight:700;">
+                                ✅ Disponible
+                            </span>
                         <?php endif; ?>
                     </td>
-                    <td style="text-align:right;">
-                        <a href="admin.php?edit=<?php echo $j['id_jeu']; ?>" style="color: #3498db; text-decoration: none; border:1px solid #3498db; padding:5px 10px; border-radius:4px; margin-right:5px;">Modifier</a>
+
+                    <!-- Prix -->
+                    <td style="padding:14px 12px; text-align:center; white-space:nowrap;">
+                        <?php if ($j['prix_solde'] > 0): ?>
+                            <span style="text-decoration:line-through; color:#ff4757; font-size:12px; margin-right:4px;"><?php echo number_format($j['prix'],2); ?>€</span>
+                            <span style="color:#2ecc71; font-weight:700; font-size:16px;"><?php echo number_format($j['prix_solde'],2); ?>€</span>
+                        <?php elseif ($j['prix'] > 0): ?>
+                            <span style="font-weight:700; font-size:15px;"><?php echo number_format($j['prix'],2); ?>€</span>
+                        <?php else: ?>
+                            <span style="color:#9aa0b4; font-size:13px;">N/A</span>
+                        <?php endif; ?>
+                    </td>
+
+                    <!-- Ventes -->
+                    <td style="padding:14px 12px; text-align:center;">
+                        <span style="color:#9aa0b4; font-size:14px;"><?php echo (int)($j['ventes'] ?? 0); ?></span>
+                    </td>
+
+                    <!-- Actions -->
+                    <td style="padding:14px 12px; text-align:right; white-space:nowrap;">
+                        <a href="jeu.php?id=<?php echo $j['id_jeu']; ?>" target="_blank"
+                           style="color:#9aa0b4; border:1px solid #333; padding:5px 10px; border-radius:5px; text-decoration:none; font-size:13px; margin-right:5px; transition:.15s;"
+                           onmouseover="this.style.borderColor='#9aa0b4'" onmouseout="this.style.borderColor='#333'">
+                            👁
+                        </a>
+                        <a href="admin.php?edit=<?php echo $j['id_jeu']; ?>"
+                           style="color:#3498db; border:1px solid #3498db44; padding:5px 10px; border-radius:5px; text-decoration:none; font-size:13px; margin-right:5px; transition:.15s;"
+                           onmouseover="this.style.background='#3498db22'" onmouseout="this.style.background=''">
+                            ✏️ Modifier
+                        </a>
                         <form action="admin.php" method="POST" style="display:inline;">
                             <input type="hidden" name="action" value="delete_jeu">
                             <input type="hidden" name="id_jeu" value="<?php echo $j['id_jeu']; ?>">
-                            <button type="submit" onclick="return confirm('Supprimer définitivement ce jeu ?')" style="background:#ff4757; border:none; color:white; padding:6px 10px; border-radius:4px; cursor:pointer;">Supprimer</button>
+                            <button type="submit"
+                                    onclick="return confirm('Supprimer définitivement « <?php echo htmlspecialchars(addslashes($j['titre'])); ?> » ?')"
+                                    style="background:none; border:1px solid #ff475744; color:#ff4757; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:13px; transition:.15s;"
+                                    onmouseover="this.style.background='#ff475722'" onmouseout="this.style.background='none'">
+                                🗑 Suppr.
+                            </button>
                         </form>
                     </td>
                 </tr>
                 <?php endforeach; ?>
+                </tbody>
             </table>
+            </div>
+
+            <p id="inv-no-result" style="display:none; text-align:center; color:#9aa0b4; padding:30px; font-size:14px;">
+                Aucun jeu ne correspond à la recherche.
+            </p>
         </section>
+
+        <script>
+        function filtrerInventaire() {
+            var terme = document.getElementById('inv-search').value.toLowerCase().trim();
+            var cat   = document.getElementById('inv-cat').value.toLowerCase().trim();
+            var rows  = document.querySelectorAll('.inv-row');
+            var aucun = true;
+
+            rows.forEach(function(row) {
+                var matchTerme = !terme || row.dataset.search.includes(terme);
+                var matchCat   = !cat   || row.dataset.cat.toLowerCase() === cat;
+                var visible    = matchTerme && matchCat;
+                row.style.display = visible ? '' : 'none';
+                if (visible) aucun = false;
+            });
+            document.getElementById('inv-no-result').style.display = aucun ? 'block' : 'none';
+        }
+        document.getElementById('inv-search').addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') { this.value = ''; filtrerInventaire(); }
+        });
+        </script>
 
     </div>
 </body>
