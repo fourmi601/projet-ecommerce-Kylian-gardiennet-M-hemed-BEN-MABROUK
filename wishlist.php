@@ -2,7 +2,7 @@
 session_start();
 require 'db.php';
 
-// Sécurité
+// secruité //
 if (!isset($_SESSION['user_id'])) {
     header('Location: connexion.php');
     exit();
@@ -10,7 +10,6 @@ if (!isset($_SESSION['user_id'])) {
 
 $id_user = $_SESSION['user_id'];
 
-// On va chercher les jeux que l'utilisateur a mis dans sa wishlist
 $stmt = $pdo->prepare("
     SELECT j.*, c.nom_cat 
     FROM wishlist w 
@@ -22,7 +21,7 @@ $stmt = $pdo->prepare("
 $stmt->execute([$id_user]);
 $mes_favoris = $stmt->fetchAll();
 
-// On calcule le nombre d'articles dans le panier pour la navbar
+// Calcule pannier //
 $nb_articles = isset($_SESSION['panier']) ? count($_SESSION['panier']) : 0;
 ?>
 

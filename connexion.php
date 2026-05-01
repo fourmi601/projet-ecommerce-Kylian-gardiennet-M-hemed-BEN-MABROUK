@@ -62,7 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $_SESSION['role']          = $user_local['role'];
                         $_SESSION['email']         = $user_local['email'];
                         $_SESSION['ecotech_token'] = $user_bank['token'] ?? '';
-                        header('Location: index.php');
+                        $redirect = !empty($_SESSION['flash']['retour']) ? $_SESSION['flash']['retour'] : 'index.php';
+                        unset($_SESSION['flash']);
+                        header('Location: ' . $redirect);
                         exit();
                     } else {
                         $erreur = "Compte bancaire valide, mais vous n'êtes pas inscrit sur Digital Games.";
@@ -96,6 +98,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div style="background: var(--bg-panel, #1a1c24); padding: 40px; border-radius: 8px; border: 1px solid #2a2c35; width: 100%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
             <h1 style="color: #fff; text-align: center; margin-bottom: 30px; font-size: 32px;">Connexion</h1>
             
+            <?php
+            // Message flash (depuis wishlist, paiement, etc.)
+            if (!empty($_SESSION['flash']['message'])):
+                $flash_couleur = $_SESSION['flash']['type'] === 'paiement' ? '#0055cc' : '#ff4757';
+                $flash_bg      = $_SESSION['flash']['type'] === 'paiement' ? '#0055cc20' : '#ff475720';
+            ?>
+                <div style="background:<?php echo $flash_bg; ?>; border:1px solid <?php echo $flash_couleur; ?>; color:<?php echo $flash_couleur; ?>; padding:14px 16px; border-radius:6px; margin-bottom:20px; text-align:center; font-size:15px;">
+                    <?php echo htmlspecialchars($_SESSION['flash']['message']); ?>
+                </div>
+            <?php endif; ?>
+
             <?php if (!empty($erreur)): ?>
                 <div style="background: #ff475720; border: 1px solid #ff4757; color: #ff4757; padding: 10px; border-radius: 4px; margin-bottom: 20px; text-align: center;">
                     <?php echo htmlspecialchars($erreur); ?>

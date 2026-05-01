@@ -156,9 +156,15 @@ $_SESSION['total_a_payer'] = $total;
                                 </div>
                             </div>
                             <div style="text-align:right; flex-shrink:0;">
+                                <?php $prix_u = ($jeu['prix_solde'] > 0) ? $jeu['prix_solde'] : $jeu['prix']; ?>
                                 <div style="font-size:22px; font-weight:700; color:#2ecc71; white-space:nowrap;">
-                                    <?php echo number_format($jeu['prix'] * $qte, 2, ',', ' '); ?> €
+                                    <?php echo number_format($prix_u * $qte, 2, ',', ' '); ?> €
                                 </div>
+                                <?php if ($jeu['prix_solde'] > 0): ?>
+                                    <div style="font-size:13px; color:#ff4757; text-decoration:line-through; white-space:nowrap;">
+                                        <?php echo number_format($jeu['prix'] * $qte, 2, ',', ' '); ?> €
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -191,7 +197,25 @@ $_SESSION['total_a_payer'] = $total;
                     </div>
 
                     <?php if (!empty($jeux_panier)): ?>
-                        <a href="process_paiement.php" style="display: block; width: 100%; background: #ff4757; color: white; text-align: center; padding: 15px; border-radius: 4px; text-decoration: none; font-weight: bold; margin-top: 30px;">PASSER À LA CAISSE</a>
+                        <?php if (isset($_SESSION['user_id'])): ?>
+                            <a href="paiement.php"
+                               style="display:block; width:100%; background:#ff4757; color:white; text-align:center; padding:15px; border-radius:6px; text-decoration:none; font-weight:bold; margin-top:30px; transition:.2s; box-sizing:border-box;"
+                               onmouseover="this.style.background='#ff1f38'" onmouseout="this.style.background='#ff4757'">
+                                🔒 PASSER À LA CAISSE
+                            </a>
+                        <?php else: ?>
+                            <!-- Pas connecté : le bouton amène à connexion avec message -->
+                            <a href="paiement.php"
+                               style="display:block; width:100%; background:#9aa0b4; color:white; text-align:center; padding:15px; border-radius:6px; text-decoration:none; font-weight:bold; margin-top:30px; box-sizing:border-box;">
+                                🔒 PASSER À LA CAISSE
+                            </a>
+                            <p style="text-align:center; font-size:13px; color:#9aa0b4; margin-top:8px;">
+                                <a href="connexion.php" style="color:#ff4757; text-decoration:none;">Connectez-vous</a>
+                                ou
+                                <a href="inscription.php" style="color:#3498db; text-decoration:none;">créez un compte</a>
+                                pour payer.
+                            </p>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>

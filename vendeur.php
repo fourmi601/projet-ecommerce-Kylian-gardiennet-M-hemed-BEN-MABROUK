@@ -1,5 +1,5 @@
 <?php
-// espace tiers : CRUD jeux liés à id_vendeur + stats rapides
+// espace tiers //
 session_start();
 require 'db.php';
 
@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'tiers' && $_SESSION[
 $id_vendeur = $_SESSION['user_id'];
 $message = '';
 
-// ─── TRAITEMENT FORMULAIRE ─────────────────────────────────────────────────
+//  TRAITEMENT FORMULAIRE //
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Import automatique depuis l'API Steam
@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $titre       = $jeu_steam['name'];
                 $description = strip_tags($jeu_steam['short_description']);
 
-                // Catégorie : on cherche si elle existe déjà, sinon on la crée
+                // Catégorie : on cherche si elle existe déjà, sinon on la crée //
                 $id_cat_import = 1;
                 if (!empty($jeu_steam['genres'])) {
                     $nom_genre = $jeu_steam['genres'][0]['description'];
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
-                // Prix (Steam donne les centimes)
+                // Prix  //
                 $prix = isset($jeu_steam['price_overview'])
                     ? ($jeu_steam['price_overview']['initial'] / 100) : 0;
 
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($ts) $date_sortie_import = date('Y-m-d H:i:s', $ts);
                 }
 
-                // Image de couverture
+                // Image de couverture //
                 $image_name = 'steam_' . $id_steam_import . '.jpg';
                 $image_data = @file_get_contents($jeu_steam['header_image']);
                 if ($image_data) {
@@ -67,7 +67,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $image_name = 'default.jpg';
                 }
 
-                // Insertion avec id_vendeur = vendeur connecté
                 $stmt = $pdo->prepare("INSERT INTO jeu (titre, description, prix, image, id_cat, id_steam, date_sortie, id_vendeur) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
                 $stmt->execute([$titre, $description, $prix, $image_name, $id_cat_import, $id_steam_import, $date_sortie_import, $id_vendeur]);
 
@@ -121,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// ─── DONNÉES ───────────────────────────────────────────────────────────────
+// Data //
 $categories = $pdo->query("SELECT * FROM categorie ORDER BY nom_cat")->fetchAll();
 
 $stmtMesJeux = $pdo->prepare("SELECT j.*, c.nom_cat FROM jeu j JOIN categorie c ON j.id_cat = c.id_cat WHERE j.id_vendeur = ? ORDER BY j.titre");
@@ -176,7 +175,6 @@ if (isset($_GET['edit'])) {
 
     <div style="max-width:1280px; margin:36px auto; padding:0 24px;">
 
-        <!-- En-tête -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:28px;">
             <div>
                 <h1 style="margin:0; font-size:26px;">🏪 Tableau de bord vendeur</h1>
@@ -185,7 +183,6 @@ if (isset($_GET['edit'])) {
             <a href="admin_stats.php" class="v-btn v-btn-primary">📊 Voir mes statistiques</a>
         </div>
 
-        <!-- Message -->
         <?php if ($message): ?>
         <div style="background:<?php echo $message['type']==='ok' ? 'rgba(46,204,113,.1)' : 'rgba(243,156,18,.1)'; ?>;
                     border:1px solid <?php echo $message['type']==='ok' ? '#2ecc71' : '#f39c12'; ?>;
@@ -195,7 +192,6 @@ if (isset($_GET['edit'])) {
         </div>
         <?php endif; ?>
 
-        <!-- KPIs -->
         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:28px;">
             <div class="kpi">
                 <div class="kpi-val" style="color:#2ecc71;"><?php echo number_format($stats['ca_total'],2); ?> €</div>
@@ -211,7 +207,7 @@ if (isset($_GET['edit'])) {
             </div>
         </div>
 
-        <!-- Import Steam (seulement si pas en mode modification) -->
+        <!-- steam import -->
         <?php if (!$jeu_a_modifier): ?>
         <div class="v-card" style="margin-bottom:24px; border-color:#0055cc;">
             <h2 style="margin:0 0 6px; font-size:18px; color:#3498db;">🎮 Importer un jeu depuis Steam</h2>
@@ -238,10 +234,8 @@ if (isset($_GET['edit'])) {
         </div>
         <?php endif; ?>
 
-        <!-- Contenu principal -->
         <div style="display:grid; grid-template-columns:360px 1fr; gap:24px; align-items:start;">
 
-            <!-- Formulaire ajout / modification -->
             <div class="v-card">
                 <h2 style="margin:0 0 20px; font-size:18px; border-bottom:1px solid #252836; padding-bottom:12px;">
                     <?php echo $jeu_a_modifier ? '✏️ Modifier l\'annonce' : '➕ Mettre un jeu en vente'; ?>

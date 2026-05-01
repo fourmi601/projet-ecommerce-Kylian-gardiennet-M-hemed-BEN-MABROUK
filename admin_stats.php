@@ -1,5 +1,5 @@
 <?php
-// monitoring : admin = global / tiers = ses jeux seulement (filtre id_vendeur)
+// monitoring : admin = global / tiers = ses jeux seulement //
 session_start();
 require 'db.php';
 
@@ -12,7 +12,7 @@ $is_admin  = ($_SESSION['role'] === 'admin');
 $id_user   = $_SESSION['user_id'];
 $where_jeu = $is_admin ? "1=1" : "j.id_vendeur = " . (int)$id_user;
 
-// Filtre période
+// Filtre période //
 $periode = $_GET['periode'] ?? 'all';
 $date_sql = match($periode) {
     '7j'  => "AND v.date_vente >= DATE_SUB(NOW(), INTERVAL 7 DAY)",
@@ -25,14 +25,14 @@ $titre_periode = match($periode) {
     default => "Toutes les périodes"
 };
 
-// ── 1. Globaux ──────────────────────────────────────────────────────────────
+//  1. Globaux //
 $statsGlobales = $pdo->query("
     SELECT COUNT(v.id_vente) AS total_vendu, COALESCE(SUM(v.prix_paye),0) AS ca_total
     FROM historique_ventes v JOIN jeu j ON v.id_jeu = j.id_jeu
     WHERE $where_jeu $date_sql
 ")->fetch();
 
-// ── 2. Commandes (admin) / tiers filtrés ────────────────────────────────────
+// ── 2. Commandes (admin) / tiers filtrés //
 if ($is_admin) {
     $nb_commandes   = $pdo->query("SELECT COUNT(*) FROM commande")->fetchColumn();
     $nb_utilisateurs = $pdo->query("SELECT COUNT(*) FROM utilisateur WHERE role='client'")->fetchColumn();
@@ -48,7 +48,7 @@ if ($is_admin) {
     $panier_moyen    = null;
 }
 
-// ── 3. Top 5 jeux ────────────────────────────────────────────────────────────
+// ── 3. Top 5 jeux //
 $topJeux = $pdo->query("
     SELECT j.titre, COUNT(v.id_vente) AS ventes, SUM(v.prix_paye) AS ca
     FROM historique_ventes v JOIN jeu j ON v.id_jeu = j.id_jeu
@@ -56,7 +56,7 @@ $topJeux = $pdo->query("
     GROUP BY j.id_jeu, j.titre ORDER BY ventes DESC LIMIT 5
 ")->fetchAll();
 
-// ── 4. Ventes par catégorie ────────────────────────────────────────────────
+// ── 4. Ventes par catégorie //
 $statsCat = $pdo->query("
     SELECT c.nom_cat, COUNT(v.id_vente) AS total, SUM(v.prix_paye) AS ca
     FROM historique_ventes v JOIN jeu j ON v.id_jeu = j.id_jeu
@@ -117,7 +117,7 @@ $dernieresVentes = $pdo->query("
 
     <div style="max-width:1280px; margin:40px auto; padding:0 24px;">
 
-        <!-- En-tête -->
+        
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
             <div>
                 <h1 style="margin:0; font-size:26px;">📊 <?php echo $is_admin ? 'Monitoring Global' : 'Mes Stats Vendeur'; ?></h1>
@@ -173,23 +173,20 @@ $dernieresVentes = $pdo->query("
             <?php endif; ?>
         </div>
 
-        <!-- Graphiques -->
+    
         <div style="display:grid; grid-template-columns:2fr 1fr; gap:20px; margin-bottom:28px;">
 
-            <!-- Évolution CA -->
             <div class="chart-box">
                 <p class="chart-title">Évolution du CA (<?php echo $limit_days; ?> jours)</p>
                 <canvas id="chartCA" style="max-height:260px;"></canvas>
             </div>
 
-            <!-- Donut catégories -->
             <div class="chart-box">
                 <p class="chart-title">Ventes par catégorie</p>
                 <canvas id="chartCat" style="max-height:260px;"></canvas>
             </div>
         </div>
 
-        <!-- Top 5 + dernières ventes -->
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:28px;">
 
             <div class="chart-box">
@@ -223,7 +220,7 @@ $dernieresVentes = $pdo->query("
         const defaults   = Chart.defaults;
         defaults.color   = textColor;
 
-        // Évolution CA
+        // Évolution CA //
         new Chart(document.getElementById('chartCA'), {
             type: 'line',
             data: {
@@ -245,7 +242,7 @@ $dernieresVentes = $pdo->query("
             }
         });
 
-        // Top 5 jeux
+        // Top 5 jeux //
         new Chart(document.getElementById('chartJeux'), {
             type: 'bar',
             data: {
@@ -260,7 +257,7 @@ $dernieresVentes = $pdo->query("
             }
         });
 
-        // Donut catégories
+        // Donut catégories //
         new Chart(document.getElementById('chartCat'), {
             type: 'doughnut',
             data: {

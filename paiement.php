@@ -2,7 +2,18 @@
 session_start();
 
 if (empty($_SESSION['panier']) || !isset($_SESSION['total_a_payer'])) {
-    header('Location: index.php');
+    header('Location: panier.php');
+    exit();
+}
+
+// Doit être connecté pour payer
+if (!isset($_SESSION['user_id'])) {
+    $_SESSION['flash'] = [
+        'type'    => 'paiement',
+        'message' => '🔒 Vous devez être connecté pour procéder au paiement.',
+        'retour'  => 'paiement.php'
+    ];
+    header('Location: connexion.php');
     exit();
 }
 

@@ -85,9 +85,13 @@ if (isset($_SESSION['user_id'])) {
 
                         <?php if (isset($_SESSION['user_id'])): ?>
                             <?php $est_favori = in_array($jeu['id_jeu'], $ma_wishlist); ?>
-                            <a href="ajouter_wishlist.php?id_jeu=<?php echo $jeu['id_jeu']; ?>" class="btn-wishlist">
+                            <a href="ajouter_wishlist.php?id_jeu=<?php echo $jeu['id_jeu']; ?>" class="btn-wishlist"
+                               title="<?php echo $est_favori ? 'Retirer de la wishlist' : 'Ajouter à la wishlist'; ?>">
                                 <?php echo $est_favori ? '❤️' : '🤍'; ?>
                             </a>
+                        <?php else: ?>
+                            <a href="ajouter_wishlist.php?id_jeu=<?php echo $jeu['id_jeu']; ?>" class="btn-wishlist"
+                               title="Connectez-vous pour ajouter à la wishlist">🤍</a>
                         <?php endif; ?>
 
                         <div class="card-image">

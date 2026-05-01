@@ -5,6 +5,11 @@ session_start();
 require 'db.php';
 
 if (!isset($_SESSION['user_id'])) {
+    $_SESSION['flash'] = [
+        'type'    => 'wishlist',
+        'message' => '❤️ Connectez-vous pour ajouter des jeux à votre wishlist.',
+        'retour'  => safe_redirect($_SERVER['HTTP_REFERER'] ?? '', 'catalogue.php')
+    ];
     header('Location: connexion.php');
     exit();
 }
