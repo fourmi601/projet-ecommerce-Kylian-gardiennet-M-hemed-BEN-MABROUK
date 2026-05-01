@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(grep -n \"//\" \"e:/xamp/htdocs/Projet dev/sync_steam.php\")"
-    ]
-  }
-}
